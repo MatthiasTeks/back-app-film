@@ -2,7 +2,7 @@ import { Application } from 'express';
 import homeRouter from './home';
 import authRouter from './auth';
 import newsletterRouter from './newsletter';
-import projetRouter from './projet';
+import projectRouter from './project';
 
 /**
  * Sets up routes for the Express application.
@@ -14,7 +14,7 @@ const setupRoutes = (app: Application): void => {
     app.use('/home', homeRouter);
     app.use('/auth', authRouter);
     app.use('/newsletter', newsletterRouter);
-    app.use('/projet', projetRouter);
+    app.use('/projet', projectRouter);
 };
 
 export { setupRoutes };

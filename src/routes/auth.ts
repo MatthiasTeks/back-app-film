@@ -1,6 +1,8 @@
-const authRouter = require('express').Router();
+import express, { Request, Response } from 'express';
 const Auth = require('../models/auth');
 const jwt = require('jsonwebtoken');
+
+const authRouter = express.Router();
 
 /* GET TOKEN FROM USER */
 const getToken = req => {
@@ -94,4 +96,4 @@ authRouter.post('/protected', (req, res) => {
 });
 
 
-module.exports = authRouter
+export default authRouter

@@ -1,15 +1,18 @@
-const { getConnection } = require('../config/database.js');
 import Joi, { ValidationError } from 'joi';
-import { InterfaceNewsletter } from '../interface/Interface';
+import {RowDataPacket} from "mysql2";
+
+import {createDBConnection} from "../config/database";
+
+import { Newsletter } from "../interface/Interface";
 
 /**
 * Validates a newsletter object based on the provided data.
 * @function
-* @param {InterfaceNewsletter} data - The newsletter object to be validated.
+* @param {Newsletter} data - The newsletter object to be validated.
 * @param {boolean} [forCreation=true] - A flag to indicate whether the validation is for creation (required fields) or not (optional fields).
 * @returns {ValidationError | undefined} - Returns a ValidationError if the data is invalid, otherwise returns undefined.
 */
-const validate = (data: InterfaceNewsletter, forCreation = true): ValidationError | undefined => {
+export const validateNewsletter = (data: Newsletter, forCreation = true): ValidationError | undefined => {
     const presence = forCreation ? 'required' : 'optional';
     return Joi.object({
       id_newsletter: Joi.number(),
@@ -22,19 +25,22 @@ const validate = (data: InterfaceNewsletter, forCreation = true): ValidationErro
 * Retrieves all newsletter entries from the database.
 * @async
 * @function
-* @returns {Promise<Array<InterfaceNewsletter>>} - A Promise that resolves with an array of newsletter entries or rejects with an error.
+* @returns {Promise<Array<Newsletter>>} - A Promise that resolves with an array of newsletter entries or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue retrieving the newsletter entries from the database.
 */
-const findMany = async (): Promise<Array<InterfaceNewsletter>> => {
+export const findMany = async (): Promise<Array<Newsletter>> => {
     try {
-        const connection = await getConnection();
-        const [result] = await connection.promise().query('SELECT * FROM newsletter');
+        const connection = await createDBConnection();
+        const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM newsletter');
         connection.release();
-        return result;
+        return result.map(row => ({
+            mail: row.mail,
+            consent: row.consent
+        })) as Newsletter[];
     } catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;
-}
+    }
 };
 
 /**
@@ -42,15 +48,21 @@ const findMany = async (): Promise<Array<InterfaceNewsletter>> => {
 * @async
 * @function
 * @param {string} mail - The email address of the newsletter entry to retrieve.
-* @returns {Promise<InterfaceNewsletter | undefined>} - A Promise that resolves with the newsletter entry if found or undefined if not found, or rejects with an error.
+* @returns {Promise<Newsletter | undefined>} - A Promise that resolves with the newsletter entry if found or undefined if not found, or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue retrieving the newsletter entry from the database.
 */
-const findOne = async (mail: string): Promise<InterfaceNewsletter | undefined> => {
+export const findOne = async (mail: string): Promise<Newsletter | undefined> => {
     try {
-      const connection = await getConnection();
-      const [result] = await connection.promise().query('SELECT * FROM newsletter WHERE mail = ?', [mail]);
+      const connection = await createDBConnection();
+      const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM newsletter WHERE mail = ?', [mail]);
       connection.release();
-      return result[0];
+        if (result.length === 0) {
+            return undefined;
+        }
+        return {
+            mail: result[0].mail,
+            consent: result[0].consent
+        };
     } catch (error) {
       console.error('Erreur lors de la requête: ', error);
       throw error;
@@ -61,16 +73,16 @@ const findOne = async (mail: string): Promise<InterfaceNewsletter | undefined> =
 * Inserts a new newsletter entry into the database.
 * @async
 * @function
-* @param {InterfaceNewsletter} { mail, consent } - The newsletter object containing the email address and consent status.
-* @returns {Promise<InterfaceNewsletter>} - A Promise that resolves with the created newsletter entry or rejects with an error.
+* @param {Newsletter} { mail, consent } - The newsletter object containing the email address and consent status.
+* @returns {Promise<Newsletter>} - A Promise that resolves with the created newsletter entry or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue inserting the newsletter entry into the database.
 */
-const create = async ({ mail, consent }: InterfaceNewsletter): Promise<InterfaceNewsletter> => {
+export const create = async ({ mail, consent }: Newsletter): Promise<Newsletter> => {
     const sql = 'INSERT INTO newsletter (mail, consent) VALUES (?, ?)';
   
     try {
-      const connection = await getConnection();
-      const [result]: any = await connection.promise().query(sql, [mail, consent]);
+      const connection = await createDBConnection();
+      const [result]: any = await connection.query(sql, [mail, consent]);
       connection.release();
       const id_newsletter = result.insertId;
       return { id_newsletter, mail, consent };
@@ -88,22 +100,14 @@ const create = async ({ mail, consent }: InterfaceNewsletter): Promise<Interface
 * @returns {Promise<boolean>} - A Promise that resolves with a boolean indicating whether the newsletter entry was deleted or not, or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue deleting the newsletter entry from the database.
 */
-const destroy = async (mail: string): Promise<boolean> => {
+export const destroy = async (mail: string): Promise<boolean> => {
     try {
-      const connection = await getConnection();
-      const [result]: any = await connection.promise().query('DELETE FROM newsletter WHERE mail = ?', [mail]);
+      const connection = await createDBConnection();
+      const [result]: any = await connection.query('DELETE FROM newsletter WHERE mail = ?', [mail]);
       connection.release();
       return result.affectedRows !== 0;
     } catch (error) {
       console.error('Erreur lors de la requête: ', error);
       throw error;
     }
-};
-  
-export {
-    validate,
-    findMany,
-    findOne,
-    create,
-    destroy,
 };

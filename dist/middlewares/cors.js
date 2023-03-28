@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.corsMiddleware = void 0;
 /**
 * Middleware function to enable CORS requests and headers.
 * @function
@@ -8,15 +9,16 @@ import { Request, Response, NextFunction } from 'express';
 * @param {NextFunction} next - The next middleware function.
 * @returns {void}
 */
-export const corsMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-    res.header("Access-Control-Allow-Origin", process.env.HEROKU_APP_URL || 'http://localhost:3000');
+const corsMiddleware = (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", process.env.HEROKU_APP_URL || 'http://localhost:5173');
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-
     if (req.method === "OPTIONS") {
         res.status(200).json({});
         next();
-    } else {
+    }
+    else {
         next();
     }
 };
+exports.corsMiddleware = corsMiddleware;
