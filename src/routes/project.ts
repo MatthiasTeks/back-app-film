@@ -7,9 +7,7 @@ import {
     findProjectOnLimit,
     findProjectByGender,
     findAllProject,
-    updateProject,
     createProject,
-    destroyProject
 } from "../models/project";
 
 import { UploadController } from "../controller";
@@ -25,8 +23,6 @@ projectRouter.post("/upload/multiple", upload.array('uploaded_files', 5), Upload
 
 /**
 * Gets all project records.
-* @async
-* @function
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
 * @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
@@ -47,8 +43,6 @@ projectRouter.get('/', async (req: Request, res: Response) => {
 
 /**
 * Creates a new project record with the provided data.
-* @async
-* @function
 * @param {Object} req - The HTTP request object.
 * @param {Object} res - The HTTP response object.
 * @returns {Promise<void>} - A Promise that resolves with the created project record or rejects with an error.
@@ -76,8 +70,6 @@ projectRouter.post('/create', async (req: Request, res: Response): Promise<void>
 
 /**
 * Gets a page of project records based on the specified page number and project type.
-* @async
-* @function
 * @param {Object} req - The HTTP request object.
 * @param {Object} res - The HTTP response object.
 * @returns {Promise<void>} - A Promise that resolves with a page of project records or rejects with an error.
@@ -100,8 +92,6 @@ projectRouter.get('/page', async (req: Request, res: Response): Promise<void> =>
 
 /**
 * Gets all project records with the specified sex.
-* @async
-* @function
 * @param {Object} req - The HTTP request object.
 * @param {Object} res - The HTTP response object.
 * @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
@@ -123,8 +113,6 @@ projectRouter.get('/gender/:gender', async (req: Request, res: Response): Promis
 
 /**
 * Get a project record by its name.
-* @async
-* @function
 * @param {Object} req - The HTTP request object.
 * @param {Object} res - The HTTP response object.
 * @returns {Promise<void>} - A Promise that resolves with the project record or rejects with an error.
@@ -146,8 +134,6 @@ projectRouter.get('/:name', async (req: Request, res: Response): Promise<void> =
 
 /**
  * Get a signed URL for a video associated with a project.
- * @async
- * @function
  * @param {Object} req - The HTTP request object.
  * @param {Object} res - The HTTP response object.
  * @returns {Promise<void>} - A Promise that resolves with the signed URL or rejects with an error.

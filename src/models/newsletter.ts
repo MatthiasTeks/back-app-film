@@ -1,13 +1,12 @@
 import Joi, { ValidationError } from 'joi';
-import {RowDataPacket} from "mysql2";
+import { RowDataPacket } from "mysql2";
 
-import {createDBConnection} from "../config/database";
+import { createDBConnection } from "../config/database";
 
 import { Newsletter } from "../interface/Interface";
 
 /**
 * Validates a newsletter object based on the provided data.
-* @function
 * @param {Newsletter} data - The newsletter object to be validated.
 * @param {boolean} [forCreation=true] - A flag to indicate whether the validation is for creation (required fields) or not (optional fields).
 * @returns {ValidationError | undefined} - Returns a ValidationError if the data is invalid, otherwise returns undefined.
@@ -23,12 +22,10 @@ export const validateNewsletter = (data: Newsletter, forCreation = true): Valida
 
 /**
 * Retrieves all newsletter entries from the database.
-* @async
-* @function
 * @returns {Promise<Array<Newsletter>>} - A Promise that resolves with an array of newsletter entries or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue retrieving the newsletter entries from the database.
 */
-export const findMany = async (): Promise<Array<Newsletter>> => {
+export const findAllNewsletter = async (): Promise<Array<Newsletter>> => {
     try {
         const connection = await createDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM newsletter');
@@ -45,13 +42,11 @@ export const findMany = async (): Promise<Array<Newsletter>> => {
 
 /**
 * Retrieves a newsletter entry by its email address.
-* @async
-* @function
 * @param {string} mail - The email address of the newsletter entry to retrieve.
 * @returns {Promise<Newsletter | undefined>} - A Promise that resolves with the newsletter entry if found or undefined if not found, or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue retrieving the newsletter entry from the database.
 */
-export const findOne = async (mail: string): Promise<Newsletter | undefined> => {
+export const findNewsletterByMail = async (mail: string): Promise<Newsletter | undefined> => {
     try {
       const connection = await createDBConnection();
       const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM newsletter WHERE mail = ?', [mail]);
@@ -71,13 +66,11 @@ export const findOne = async (mail: string): Promise<Newsletter | undefined> => 
  
 /**
 * Inserts a new newsletter entry into the database.
-* @async
-* @function
 * @param {Newsletter} { mail, consent } - The newsletter object containing the email address and consent status.
 * @returns {Promise<Newsletter>} - A Promise that resolves with the created newsletter entry or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue inserting the newsletter entry into the database.
 */
-export const create = async ({ mail, consent }: Newsletter): Promise<Newsletter> => {
+export const createNewsletter = async ({ mail, consent }: Newsletter): Promise<Newsletter> => {
     const sql = 'INSERT INTO newsletter (mail, consent) VALUES (?, ?)';
   
     try {
@@ -92,22 +85,20 @@ export const create = async ({ mail, consent }: Newsletter): Promise<Newsletter>
     }
 };
 
-/**
-* Deletes a newsletter entry from the database by its email address.
-* @async
-* @function
-* @param {string} mail - The email address of the newsletter entry to be deleted.
-* @returns {Promise<boolean>} - A Promise that resolves with a boolean indicating whether the newsletter entry was deleted or not, or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue deleting the newsletter entry from the database.
-*/
-export const destroy = async (mail: string): Promise<boolean> => {
-    try {
-      const connection = await createDBConnection();
-      const [result]: any = await connection.query('DELETE FROM newsletter WHERE mail = ?', [mail]);
-      connection.release();
-      return result.affectedRows !== 0;
-    } catch (error) {
-      console.error('Erreur lors de la requête: ', error);
-      throw error;
-    }
-};
+// /**
+// * Deletes a newsletter entry from the database by its email address.
+// * @param {string} mail - The email address of the newsletter entry to be deleted.
+// * @returns {Promise<boolean>} - A Promise that resolves with a boolean indicating whether the newsletter entry was deleted or not, or rejects with an error.
+// * @throws {Error} - Throws an error if there was an issue deleting the newsletter entry from the database.
+// */
+// export const destroyNewsletter = async (mail: string): Promise<boolean> => {
+//     try {
+//       const connection = await createDBConnection();
+//       const [result]: any = await connection.query('DELETE FROM newsletter WHERE mail = ?', [mail]);
+//       connection.release();
+//       return result.affectedRows !== 0;
+//     } catch (error) {
+//       console.error('Erreur lors de la requête: ', error);
+//       throw error;
+//     }
+// };

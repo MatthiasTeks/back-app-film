@@ -1,56 +1,44 @@
 import express, { Request, Response } from 'express';
-const Auth = require('../models/auth');
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
+
+import { findAdminByMail, verifyAdminPassword } from "../models/auth";
 
 const authRouter = express.Router();
 
-/* GET TOKEN FROM USER */
-const getToken = req => {
+/**
+ * Retrieves the token from the request's authorization header or query parameter.
+ * @function
+ * @param {Request} req - The request object.
+ * @returns {string | null} - Returns the token as a string if found, or null if not found.
+ */
+const getToken = (req: Request): string | null => {
     if (
         req.headers.authorization &&
         req.headers.authorization.split(' ')[0] === 'Bearer'
     ) {
         return req.headers.authorization.split(' ')[1]
     } else if (req.query && req.query.token) {
-        return req.query.token
+        return req.query.token as string;
     }
     return null
 };
 
-/* CREATE NEW ADMIN */
-authRouter.post('/create', (req, res) => {
-    const { email } = req.body;
-    let validationErrors = null;
-    Auth.findByEmail(email)
-        .then((existingUserWithEmail) => {
-            if (existingUserWithEmail) return Promise.reject('DUPLICATE_EMAIL');
-            validationErrors = Auth.validate(req.body);
-            if (validationErrors) return Promise.reject('INVALID_DATA');
-            return Auth.create(req.body);
-        })
-        .then((createdUser) => {
-            res.status(201).json(createdUser);
-        })
-        .catch((err) => {
-            console.error(err);
-            if (err === 'DUPLICATE_EMAIL')
-                res.status(409).json({ message: 'This email is already used' });
-            else if (err === 'INVALID_DATA')
-                res.status(422).json({ validationErrors });
-            else res.status(500).send('Error saving the user');
-        });
-});
-
-/* CONNEXION TO ADMIN PANEL */
-authRouter.post("/login", (req, res) => {
+/**
+ * Handles the login process for an admin user.
+ * Verifies the user's email and password, then generates and sends a JWT token.
+ * @route {POST} /login
+ * @param {Request} req - The request object, containing the email and password in the request body.
+ * @param {Response} res - The response object, used to send status and token back to the client.
+ */
+authRouter.post("/login", (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    Auth.findByEmail(email)
+    findAdminByMail(email)
         .then((admin) => {
             if (!admin) res.status(401).send("Invalid credentials");
             else {
                 /* VERIFY PASSWORD */
-                Auth.verifyPassword(password, admin.password)
+                verifyAdminPassword(password, admin.password)
                     .then((passwordIsCorrect) => {
                         if (passwordIsCorrect) {
                             const tokenUserInfo = {
@@ -65,10 +53,9 @@ authRouter.post("/login", (req, res) => {
                     .then(tokenUserInfo => {
                         if(tokenUserInfo !== undefined){
                             console.log('token', tokenUserInfo)
-                            const token = jwt.sign(tokenUserInfo, process.env.JWT_SECRET)
+                            const token = jwt.sign(tokenUserInfo, process.env.JWT_SECRET as string)
                             res.header('Access-Control-Expose-Headers', 'x-access-token')
                             res.set('x-access-token', token)
-                            console.log('succed')
                             res.status(200).send({ mess: 'admin connected' })
                         }
                     })
@@ -83,10 +70,15 @@ authRouter.post("/login", (req, res) => {
         })
 });
 
-/* VERIFY NAVIGATOR TOKEN TO AUTHORIZE ACCESS TO ADMIN PAGE */
-authRouter.post('/protected', (req, res) => {
+/**
+ * Verifies if the token provided in the request is valid, granting or denying access to a protected resource.
+ * @route {POST} /protected
+ * @param {Request} req - The request object, containing the token either in the authorization header or as a query parameter.
+ * @param {Response} res - The response object, used to send the access status back to the client.
+ */
+authRouter.post('/protected', (req: Request, res: Response) => {
     const token = getToken(req)
-    jwt.verify(token, process.env.JWT_SECRET, (err, decode) => {
+    jwt.verify(token as string, process.env.JWT_SECRET as string, (err) => {
         if (err) {
             return res.status(403).send({ access: false })
         } else {

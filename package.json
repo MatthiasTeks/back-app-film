@@ -5,7 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/server.ts",
+    "dev": "nodemon --watch src --exec ts-node src/server.ts",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "argon2": "^0.28.7",
+    "argon2": "^0.30.3",
     "aws-sdk": "^2.1341.0",
     "bcrypt": "^5.0.1",
     "cookie-parser": "^1.4.6",

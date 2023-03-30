@@ -1,13 +1,11 @@
 import express, { Request, Response } from 'express';
 
-import {findActor, findMedia, findNews, findPartner, updateActor, updateMedia, updatePartner, updateNews} from "../models/home";
+import {findActor, findMedia, findNews, findPartner, updateActor, updatePartner} from "../models/home";
 
 const homeRouter = express.Router();
 
 /**
 * Retrieve home media video.
-* @async
-* @function
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
 * @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
@@ -28,8 +26,6 @@ homeRouter.get('/media', async (req: Request, res: Response) => {
 
 /**
 * Retrieve actor from home page.
-* @async
-* @function
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
 * @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
@@ -50,8 +46,6 @@ homeRouter.get('/actor', async (req: Request, res: Response) => {
 
 /**
 * Update actor in home page
-* @async
-* @function
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
 * @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
@@ -61,11 +55,7 @@ homeRouter.post('/actor/update', async (req: Request, res: Response) => {
     const { actorList, actorHome } = req.body;
     try {
         const actor = await updateActor(actorList, actorHome);
-        if (actor) {
-            res.status(200).json(actor);
-        } else {
-            res.status(404).json({ message: 'updateActor not found' });
-        }
+        res.status(200).json(actor);
     } catch (err) {
         res.status(500).json({ message: 'Error updating updateActor from database', error: err });
     }
@@ -73,8 +63,6 @@ homeRouter.post('/actor/update', async (req: Request, res: Response) => {
 
 /**
 * Get news from home page
-* @async
-* @function
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
 * @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
@@ -95,8 +83,6 @@ homeRouter.get('/news', async (req: Request, res: Response) => {
 
 /**
 * Get partner from home page
-* @async
-* @function
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
 * @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
@@ -117,8 +103,6 @@ homeRouter.get('/partner', async (req: Request, res: Response) => {
 
 /**
 * Update partner from home page
-* @async
-* @function
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
 * @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
@@ -128,11 +112,7 @@ homeRouter.post('/partner/update', async (req: Request, res: Response) => {
     const { name, media, idPartner } = req.body;
     try {
         const partner = await updatePartner(name, media, idPartner);
-        if (partner) {
-            res.status(200).json(partner);
-        } else {
-            res.status(404).json({ message: 'updatePartner not found' });
-        }
+        res.status(200).json(partner);
     } catch (err) {
         res.status(500).json({ message: 'Error updating updatePartner from database', error: err });
     }

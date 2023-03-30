@@ -1,12 +1,10 @@
 import express, { Request, Response } from 'express';
-import {create, findMany, findOne, validateNewsletter, destroy} from "../models/newsletter";
+import {createNewsletter, findAllNewsletter, findNewsletterByMail, validateNewsletter} from "../models/newsletter";
 
 const newsletterRouter = express.Router();
 
 /**
 * Retrieve all newsletters.
-* @async
-* @function
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
 * @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
@@ -14,7 +12,7 @@ const newsletterRouter = express.Router();
 */
 newsletterRouter.get('/', async (req: Request, res: Response) => {
     try {
-        const newsletter = await findMany();
+        const newsletter = await findAllNewsletter();
         if (newsletter) {
             res.status(200).json(newsletter);
         } else {
@@ -27,8 +25,6 @@ newsletterRouter.get('/', async (req: Request, res: Response) => {
 
 /**
 * Retrieve specific newsletter by mail address.
-* @async
-* @function
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
 * @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
@@ -37,7 +33,7 @@ newsletterRouter.get('/', async (req: Request, res: Response) => {
 newsletterRouter.get('/:mail', async (req: Request, res: Response) => {
     try {
         const mail = req.query.mail;
-        const newsletter = await findOne(mail as string);
+        const newsletter = await findNewsletterByMail(mail as string);
         if (newsletter) {
             res.status(200).json(newsletter);
         } else {
@@ -50,8 +46,6 @@ newsletterRouter.get('/:mail', async (req: Request, res: Response) => {
 
 /**
 * Create a new newsletter
-* @async
-* @function
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
 * @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
@@ -64,11 +58,11 @@ newsletterRouter.post('/create', async (req: Request, res: Response) => {
             res.status(422).json({ validation: error.details });
         } else {
             const lowercaseMail = req.body.actor_name.mail.toLowerCase();
-            const mailExist = await findOne(lowercaseMail);
+            const mailExist = await findNewsletterByMail(lowercaseMail);
             if (mailExist) {
                 res.status(409).json({ message: "Newsletter with the same mail already exists" });
             } else {
-                const createdNewsletter = await create(req.body);
+                const createdNewsletter = await createNewsletter(req.body);
                 res.status(201).json(createdNewsletter);
             }
         }

@@ -1,79 +1,77 @@
-import Joi from 'joi';
+// import Joi from 'joi';
+import { OkPacket, RowDataPacket } from "mysql2";
 
+import { createDBConnection } from "../config/database";
 
-import {HomeActor, HomeMedia, HomeNews, HomePartner} from "../interface/Interface";
-import {createDBConnection} from "../config/database";
-import {OkPacket, RowDataPacket} from "mysql2";
+import { HomeActor, HomeMedia, HomeNews, HomePartner } from "../interface/Interface";
 
-/**
- * Validate media data
- * @param data
- * @param forCreation
- * @returns {ValidationError}
- */
-export const validateMedia = (data: any, forCreation = true): Joi.ValidationError | undefined => {
-    const presence = forCreation ? 'required' : 'optional';
-    return Joi.object({
-        id_home_media: Joi.number(),
-        lien: Joi.string().max(255).presence(presence),
-        poster: Joi.string().max(255).presence(presence)
-    }).validate(data, { abortEarly: false }).error;
-};
+// /**
+//  * Validate media data
+//  * @param data
+//  * @param forCreation
+//  * @returns {ValidationError}
+//  */
+// export const validateMedia = (data: any, forCreation = true): Joi.ValidationError | undefined => {
+//     const presence = forCreation ? 'required' : 'optional';
+//     return Joi.object({
+//         id_home_media: Joi.number(),
+//         lien: Joi.string().max(255).presence(presence),
+//         poster: Joi.string().max(255).presence(presence)
+//     }).validate(data, { abortEarly: false }).error;
+// };
 
-/**
- * Validate actor data
- * @param data
- * @param forCreation
- * @returns {ValidationError}
- */
-export const validateActor = (data: any, forCreation = true): Joi.ValidationError | undefined => {
-    const presence = forCreation ? 'required' : 'optional';
-    return Joi.object({
-        id_home_actor: Joi.number(),
-        actor_id: Joi.number().presence(presence)
-    }).validate(data, { abortEarly: false }).error;
-};
+// /**
+//  * Validate actor data
+//  * @param data
+//  * @param forCreation
+//  * @returns {ValidationError}
+//  */
+// export const validateActor = (data: any, forCreation = true): Joi.ValidationError | undefined => {
+//     const presence = forCreation ? 'required' : 'optional';
+//     return Joi.object({
+//         id_home_actor: Joi.number(),
+//         actor_id: Joi.number().presence(presence)
+//     }).validate(data, { abortEarly: false }).error;
+// };
 
-/**
- * Validate news data
- * @param data
- * @param forCreation
- * @returns {ValidationError}
- */
-export const validateNews = (data: any, forCreation = true): Joi.ValidationError | undefined => {
-    const presence = forCreation ? 'required' : 'optional';
-    return Joi.object({
-        id_news: Joi.number(),
-        name: Joi.string().max(255).presence(presence),
-        resume: Joi.string().max(500).presence(presence),
-        date: Joi.date().presence(presence),
-        media: Joi.string().max(255).presence(presence),
-        isInsta: Joi.number().max(10).presence(presence),
-        linkInsta: Joi.string().max(255)
-    }).validate(data, { abortEarly: false }).error;
-};
+// /**
+//  * Validate news data
+//  * @param data
+//  * @param forCreation
+//  * @returns {ValidationError}
+//  */
+// export const validateNews = (data: any, forCreation = true): Joi.ValidationError | undefined => {
+//     const presence = forCreation ? 'required' : 'optional';
+//     return Joi.object({
+//         id_news: Joi.number(),
+//         name: Joi.string().max(255).presence(presence),
+//         resume: Joi.string().max(500).presence(presence),
+//         date: Joi.date().presence(presence),
+//         media: Joi.string().max(255).presence(presence),
+//         isInsta: Joi.number().max(10).presence(presence),
+//         linkInsta: Joi.string().max(255)
+//     }).validate(data, { abortEarly: false }).error;
+// };
 
-/**
- * Validate partner data
- * @param data
- * @param forCreation
- * @returns {ValidationError}
- */
-export const validatePartner = (data: any, forCreation = true): Joi.ValidationError | undefined => {
-    const presence = forCreation ? 'required' : 'optional';
-    return Joi.object({
-        id_partner: Joi.number(),
-        name: Joi.string().max(255).presence(presence),
-        media: Joi.string().max(255).presence(presence)
-    }).validate(data, { abortEarly: false }).error;
-};
+// /**
+//  * Validate partner data
+//  * @param data
+//  * @param forCreation
+//  * @returns {ValidationError}
+//  */
+// export const validatePartner = (data: any, forCreation = true): Joi.ValidationError | undefined => {
+//     const presence = forCreation ? 'required' : 'optional';
+//     return Joi.object({
+//         id_partner: Joi.number(),
+//         name: Joi.string().max(255).presence(presence),
+//         media: Joi.string().max(255).presence(presence)
+//     }).validate(data, { abortEarly: false }).error;
+// };
 
 /* -------- HOME MEDIA SECTION -------- */
 
 /**
  * Return media from home page
- * @async
- * @function
  * @returns {Promise<HomeMedia[]>} - A Promise that resolves with an array of all medias or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
  */
@@ -92,29 +90,25 @@ export const findMedia = async (): Promise<HomeMedia[]> => {
     }
 };
 
-/**
- * Update media from home page
- * @async
- * @function
- * @returns {Promise<HomeMedia[]>} - A Promise that resolves with an array of all medias or rejects with an error.
- * @throws {Error} - Throws an error if there was an issue retrieving the projects.
- */
-export const updateMedia = async (file: string): Promise<any> => {
-    try {
-        const connection = await createDBConnection();
-        const [result] = await connection.query('UPDATE home_media SET s3_video_key = ? WHERE id_home_media = 1', [file]);
-        connection.release();
-        return result;
-    } catch (error) {
-        console.error('Erreur lors de la requête: ', error);
-        throw error;
-    }
-};
+// /**
+//  * Update media from home page
+//  * @returns {Promise<HomeMedia[]>} - A Promise that resolves with an array of all medias or rejects with an error.
+//  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
+//  */
+// export const updateMedia = async (file: string): Promise<any> => {
+//     try {
+//         const connection = await createDBConnection();
+//         const [result] = await connection.query('UPDATE home_media SET s3_video_key = ? WHERE id_home_media = 1', [file]);
+//         connection.release();
+//         return result;
+//     } catch (error) {
+//         console.error('Erreur lors de la requête: ', error);
+//         throw error;
+//     }
+// };
 
 /**
  * Return actors from home page
- * @async
- * @function
  * @returns {Promise<HomeActor[]>} - A Promise that resolves with an array of all actors or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
  */
@@ -135,8 +129,6 @@ export const findActor = async (): Promise<HomeActor[]> => {
 
 /**
  * Update actor home depend on his carousel position and his project id
- * @async
- * @function
  * @returns {Promise<HomeActor[]>} - A Promise that resolves with an array of all the projects or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
  */
@@ -153,8 +145,6 @@ export const updateActor = async (actorList: number, actorHome: number): Promise
 
 /**
  * Return all news from home page
- * @async
- * @function
  * @returns {Promise<HomeNews[]>} - A Promise that resolves with an array of all news or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
  */
@@ -170,28 +160,24 @@ export const findNews = async (): Promise<HomeNews[]> => {
     }
 };
 
-/**
- * Update news from home page
- * @async
- * @function
- * @returns {Promise<HomeNews[]>} - A Promise that resolves with an array of all news or rejects with an error.
- * @throws {Error} - Throws an error if there was an issue retrieving the projects.
- */
-export const updateNews = async (name: string, resume: string, date: Date, s3_image_key: string, isInsta: boolean, linkInsta: string | null, idNews: number): Promise<void> => {
-    try {
-        const connection = await createDBConnection();
-        await connection.query('UPDATE home_news SET name = ?, resume = ?, date = ?, s3_image_key = ?, isInsta = ?, linkInsta = ? WHERE id_news = ?', [name, resume, date, s3_image_key, isInsta, linkInsta, idNews]);
-        connection.release();
-    } catch (error) {
-        console.error('Erreur lors de la requête: ', error);
-        throw error;
-    }
-};
+// /**
+//  * Update news from home page
+//  * @returns {Promise<HomeNews[]>} - A Promise that resolves with an array of all news or rejects with an error.
+//  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
+//  */
+// export const updateNews = async (name: string, resume: string, date: Date, s3_image_key: string, isInsta: boolean, linkInsta: string | null, idNews: number): Promise<void> => {
+//     try {
+//         const connection = await createDBConnection();
+//         await connection.query('UPDATE home_news SET name = ?, resume = ?, date = ?, s3_image_key = ?, isInsta = ?, linkInsta = ? WHERE id_news = ?', [name, resume, date, s3_image_key, isInsta, linkInsta, idNews]);
+//         connection.release();
+//     } catch (error) {
+//         console.error('Erreur lors de la requête: ', error);
+//         throw error;
+//     }
+// };
 
 /**
  * Return all partner from home page
- * @async
- * @function
  * @returns {Promise<HomePartner[]>} - A Promise that resolves with an array of all partners or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the partners.
  */
@@ -209,8 +195,6 @@ export const findPartner = async (): Promise<HomePartner[]> => {
 
 /**
  * Update partner from home page
- * @async
- * @function
  * @returns {Promise<HomePartner[]>} - A Promise that resolves with an array of all partners or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the partners.
  */

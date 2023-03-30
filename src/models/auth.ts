@@ -1,17 +1,20 @@
-import { createDBConnection } from "../config/database";
-import Joi, { ValidationError } from 'joi';
+// import Joi, { ValidationError } from 'joi';
+import { RowDataPacket } from "mysql2";
 import argon2 from 'argon2';
+
+import { createDBConnection } from "../config/database";
+
 import { Admin } from "../interface/Interface";
 
 interface HashingOptions {
-    type?: argon2.ArgonType;
-    memoryCost?: number;
-    timeCost?: number;
-    parallelism?: number;
-    hashLength?: number;
+    type: 0 | 1 | 2;
+    memoryCost: number;
+    timeCost: number;
+    parallelism: number;
+    hashLength: number;
 }
 
-const hashingOptions: HashingOptions = {
+export const hashingOptions: HashingOptions = {
     type: argon2.argon2d,
     memoryCost: 2 ** 16,
     timeCost: 10,
@@ -19,38 +22,55 @@ const hashingOptions: HashingOptions = {
     hashLength: 50,
 };
 
-const validate = (data: Admin, forCreation = true): ValidationError | undefined => {
-    const presence = forCreation ? 'required' : 'optional';
-    return Joi.object({
-        mail: Joi.string().email().max(255).presence(presence),
-        password: Joi.string().min(8).max(50).presence(presence),
-    }).validate(data, { abortEarly: false }).error;
-};
+// export const validateAdmin = (data: Admin, forCreation = true): ValidationError | undefined => {
+//     const presence = forCreation ? 'required' : 'optional';
+//     return Joi.object({
+//         mail: Joi.string().email().max(255).presence(presence),
+//         password: Joi.string().min(8).max(50).presence(presence),
+//     }).validate(data, { abortEarly: false }).error;
+// };
 
-const findByEmail = async (mail: string): Promise<Admin | undefined> => {
+/**
+ * Finds an admin user by their email address.
+ * @function
+ * @async
+ * @param {string} mail - The email address of the admin user to find.
+ * @returns {Promise<Admin | undefined>} A promise that resolves to an Admin object or undefined if no admin is found.
+ * @throws {Error} Will throw an error if there is an issue with the database query.
+ */
+export const findAdminByMail = async (mail: string): Promise<Admin | undefined> => {
     try {
         const connection = await createDBConnection();
-        const [results] = await connection.query('SELECT * FROM admin WHERE mail = ?', [mail]);
+        const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM admin WHERE mail = ?', [mail]);
         connection.release();
-        return results[0];
+        if (result.length === 0) {
+            return undefined;
+        }
+        return {
+            mail: result[0].mail,
+            password: ''
+        };
     } catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;
     }
 };
 
-const verifyPassword = async (plainPassword: string, hashedPassword: string): Promise<boolean> => {
+/**
+ * Verifies if a given plain password matches a hashed password using Argon2.
+ *
+ * @function
+ * @async
+ * @param {string} plainPassword - The plain text password to verify.
+ * @param {string} hashedPassword - The hashed password to compare against.
+ * @returns {Promise<boolean>} - A promise that resolves to true if the plain password matches the hashed password, or false otherwise.
+ * @throws {Error} - If there's an error during the verification process, the error will be logged and thrown.
+ */
+export const verifyAdminPassword = async (plainPassword: string, hashedPassword: string): Promise<boolean> => {
     try {
         return await argon2.verify(hashedPassword, plainPassword, hashingOptions);
     } catch (error) {
         console.error('Erreur lors de la vérification du mot de passe: ', error);
         throw error;
     }
-};
-
-export {
-    Admin,
-    validate,
-    findByEmail,
-    verifyPassword,
 };

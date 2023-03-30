@@ -3,9 +3,6 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-/**
- * Config file
- */
 export const config: {
     port: number,
     aws_access_key_id: string,
