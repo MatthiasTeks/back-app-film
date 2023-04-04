@@ -85,20 +85,20 @@ export const createNewsletter = async ({ mail, consent }: Newsletter): Promise<N
     }
 };
 
-// /**
-// * Deletes a newsletter entry from the database by its email address.
-// * @param {string} mail - The email address of the newsletter entry to be deleted.
-// * @returns {Promise<boolean>} - A Promise that resolves with a boolean indicating whether the newsletter entry was deleted or not, or rejects with an error.
-// * @throws {Error} - Throws an error if there was an issue deleting the newsletter entry from the database.
-// */
-// export const destroyNewsletter = async (mail: string): Promise<boolean> => {
-//     try {
-//       const connection = await createDBConnection();
-//       const [result]: any = await connection.query('DELETE FROM newsletter WHERE mail = ?', [mail]);
-//       connection.release();
-//       return result.affectedRows !== 0;
-//     } catch (error) {
-//       console.error('Erreur lors de la requête: ', error);
-//       throw error;
-//     }
-// };
+/**
+* Deletes a newsletter entry from the database by its email address.
+* @param {string} mail - The email address of the newsletter entry to be deleted.
+* @returns {Promise<boolean>} - A Promise that resolves with a boolean indicating whether the newsletter entry was deleted or not, or rejects with an error.
+* @throws {Error} - Throws an error if there was an issue deleting the newsletter entry from the database.
+*/
+export const destroyNewsletter = async (mail: string): Promise<boolean> => {
+    try {
+      const connection = await createDBConnection();
+      const [result]: any = await connection.query('DELETE FROM newsletter WHERE mail = ?', [mail]);
+      connection.release();
+      return result.affectedRows !== 0;
+    } catch (error) {
+      console.error('Erreur lors de la requête: ', error);
+      throw error;
+    }
+};

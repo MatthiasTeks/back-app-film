@@ -1,5 +1,12 @@
 import express, { Request, Response } from 'express';
-import {createNewsletter, findAllNewsletter, findNewsletterByMail, validateNewsletter} from "../models/newsletter";
+
+import {
+    createNewsletter,
+    destroyNewsletter,
+    findAllNewsletter,
+    findNewsletterByMail,
+    validateNewsletter
+} from "../models/newsletter";
 
 const newsletterRouter = express.Router();
 
@@ -7,17 +14,13 @@ const newsletterRouter = express.Router();
 * Retrieve all newsletters.
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @returns {Promise<void>} - A Promise that resolves with an array of newsletter records or rejects with an error.
+* @throws {Error} - Throws an error if there was an issue retrieving the newsletter records.
 */
 newsletterRouter.get('/', async (req: Request, res: Response) => {
     try {
         const newsletter = await findAllNewsletter();
-        if (newsletter) {
-            res.status(200).json(newsletter);
-        } else {
-            res.status(404).json({ message: 'newsletter not found' });
-        }
+        newsletter ? res.status(200).json(newsletter) : res.status(404).json({ message: 'newsletter not found' });
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving newsletter from database', error: err });
     }
@@ -27,18 +30,14 @@ newsletterRouter.get('/', async (req: Request, res: Response) => {
 * Retrieve specific newsletter by mail address.
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @returns {Promise<void>} - A Promise that resolves with an array of newsletter records or rejects with an error.
+* @throws {Error} - Throws an error if there was an issue retrieving the newsletter records.
 */
 newsletterRouter.get('/:mail', async (req: Request, res: Response) => {
     try {
         const mail = req.query.mail;
         const newsletter = await findNewsletterByMail(mail as string);
-        if (newsletter) {
-            res.status(200).json(newsletter);
-        } else {
-            res.status(404).json({ message: 'newsletter not found' });
-        }
+        newsletter ? res.status(200).json(newsletter) : res.status(404).json({ message: 'newsletter not found' });
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving newsletter from database', error: err });
     }
@@ -48,8 +47,8 @@ newsletterRouter.get('/:mail', async (req: Request, res: Response) => {
 * Create a new newsletter
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @returns {Promise<void>} - A Promise that resolves with new newsletter records or rejects with an error.
+* @throws {Error} - Throws an error if there was an issue creating the newsletter records.
 */
 newsletterRouter.post('/create', async (req: Request, res: Response) => {
     try {
@@ -68,6 +67,29 @@ newsletterRouter.post('/create', async (req: Request, res: Response) => {
         }
     } catch (err) {
         res.status(500).json({ message: 'Error saving the newsletter', error: err });
+    }
+});
+
+/**
+ * Delete newsletter record by id.
+ * @param {Object} req - The HTTP request object.
+ * @param {Object} res - The HTTP response object.
+ * @returns {Promise<void>} - A Promise that resolves with the newsletter record or rejects with an error.
+ * @throws {Error} - Throws an error if there was an issue retrieving the newsletter record.
+ */
+newsletterRouter.delete('/delete/:mail', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const mail = req.params.mail as string;
+        const newsletter = await findNewsletterByMail(mail);
+        if (!newsletter) {
+            res.status(404).json({ message: 'Newsletter not found' });
+        } else {
+            const result = await destroyNewsletter(mail);
+            result ? res.status(204).json(result) : res.status(500).json({ message: 'newsletter not deleted' });
+        }
+    } catch (error) {
+        console.error('An error occurred while deleting the newsletter ', error);
+        res.status(500).json({ message: 'An error occurred while deleting the newsletters' });
     }
 });
 

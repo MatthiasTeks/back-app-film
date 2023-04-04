@@ -1,4 +1,3 @@
-// import Joi, { ValidationError } from 'joi';
 import { RowDataPacket } from "mysql2";
 import argon2 from 'argon2';
 
@@ -22,18 +21,8 @@ export const hashingOptions: HashingOptions = {
     hashLength: 50,
 };
 
-// export const validateAdmin = (data: Admin, forCreation = true): ValidationError | undefined => {
-//     const presence = forCreation ? 'required' : 'optional';
-//     return Joi.object({
-//         mail: Joi.string().email().max(255).presence(presence),
-//         password: Joi.string().min(8).max(50).presence(presence),
-//     }).validate(data, { abortEarly: false }).error;
-// };
-
 /**
  * Finds an admin user by their email address.
- * @function
- * @async
  * @param {string} mail - The email address of the admin user to find.
  * @returns {Promise<Admin | undefined>} A promise that resolves to an Admin object or undefined if no admin is found.
  * @throws {Error} Will throw an error if there is an issue with the database query.
@@ -58,9 +47,6 @@ export const findAdminByMail = async (mail: string): Promise<Admin | undefined> 
 
 /**
  * Verifies if a given plain password matches a hashed password using Argon2.
- *
- * @function
- * @async
  * @param {string} plainPassword - The plain text password to verify.
  * @param {string} hashedPassword - The hashed password to compare against.
  * @returns {Promise<boolean>} - A promise that resolves to true if the plain password matches the hashed password, or false otherwise.
