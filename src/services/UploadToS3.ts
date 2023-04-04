@@ -8,6 +8,15 @@ export const s3 = new S3({
     secretAccessKey: config.aws_secret_access_key,
 });
 
+export const deleteFileFromS3 = async (key: string): Promise<void> => {
+    const params = {
+        Bucket: config.bucket_name,
+        Key: key,
+    };
+
+    await s3.deleteObject(params).promise();
+};
+
 // Function to upload a file to an S3 bucket
 export const uploadFileToS3 = async (file: Express.Multer.File): Promise<string> => {
     // Retrieving information from the file

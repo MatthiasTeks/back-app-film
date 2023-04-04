@@ -39,7 +39,7 @@ export interface HomeMedia {
 }
 
 export interface HomeNews {
-    id_home_news?: number;
+    id_news?: number;
     name: string;
     resume: string;
     date: number;
@@ -49,7 +49,7 @@ export interface HomeNews {
 }
 
 export interface HomePartner {
-    id_home_partner: number;
+    id_partner: number;
     name: string;
     s3_image_key: string;
 }

@@ -10,7 +10,10 @@ import {
     findPageProjectOnType,
     findProjectByGender,
     findAllProject,
-    createProject, findProjectById, updateProject, destroyProject,
+    createProject,
+    findProjectById,
+    updateProject,
+    destroyProject,
 } from "../models/project";
 
 

@@ -4,6 +4,7 @@ import { OkPacket, RowDataPacket } from "mysql2";
 import { createDBConnection } from "../config/database";
 
 import { HomeActor, HomeMedia, HomeNews, HomePartner } from "../interface/Interface";
+import {deleteFileFromS3} from "../services/UploadToS3";
 
 // /**
 //  * Validate media data
@@ -90,29 +91,41 @@ export const findMedia = async (): Promise<HomeMedia[]> => {
     }
 };
 
-// /**
-//  * Update media from home page
-//  * @returns {Promise<HomeMedia[]>} - A Promise that resolves with an array of all medias or rejects with an error.
-//  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
-//  */
-// export const updateMedia = async (file: string): Promise<any> => {
-//     try {
-//         const connection = await createDBConnection();
-//         const [result] = await connection.query('UPDATE home_media SET s3_video_key = ? WHERE id_home_media = 1', [file]);
-//         connection.release();
-//         return result;
-//     } catch (error) {
-//         console.error('Erreur lors de la requête: ', error);
-//         throw error;
-//     }
-// };
-
 /**
- * Return actors from home page
- * @returns {Promise<HomeActor[]>} - A Promise that resolves with an array of all actors or rejects with an error.
+ * Update media from home page
+ * @returns {Promise<HomeMedia[]>} - A Promise that resolves with an array of all medias or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
  */
-export const findActor = async (): Promise<HomeActor[]> => {
+export const updateMedia = async (file: string): Promise<any> => {
+    try {
+        const connection = await createDBConnection();
+
+        // Get the old video key
+        const [oldVideoRows] = await connection.query<RowDataPacket[]>('SELECT s3_video_key FROM home_media WHERE id_home_media = 1');
+        const oldVideoKey = oldVideoRows[0].s3_video_key;
+
+        // Update the video key in the database
+        const [result] = await connection.query<OkPacket>('UPDATE home_media SET s3_video_key = ? WHERE id_home_media = 1', [file]);
+
+        // Delete the old video from S3 if operation update success
+        if (result.affectedRows > 0) {
+            await deleteFileFromS3(oldVideoKey);
+        }
+
+        connection.release();
+        return result;
+    } catch (error) {
+        console.error('Erreur lors de la requête: ', error);
+        throw error;
+    }
+};
+
+/**
+ * Return project from home page
+ * @returns {Promise<HomeActor[]>} - A Promise that resolves with an array of all projects or rejects with an error.
+ * @throws {Error} - Throws an error if there was an issue retrieving the projects.
+ */
+export const findProject = async (): Promise<HomeActor[]> => {
     try {
         const connection = await createDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT home_actors.*, projet.* FROM home_actors JOIN projet ON home_actors.projet_id = projet.id_project ORDER BY home_actors.id_home_actors');
@@ -132,11 +145,19 @@ export const findActor = async (): Promise<HomeActor[]> => {
  * @returns {Promise<HomeActor[]>} - A Promise that resolves with an array of all the projects or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
  */
-export const updateActor = async (actorList: number, actorHome: number): Promise<void> => {
+export const updateProject = async (actorList: number, actorHome: number): Promise<HomeActor | null> => {
     try {
         const connection = await createDBConnection();
         await connection.query<OkPacket>('UPDATE home_actors SET projet_id = ? WHERE id_home_actors = ?', [actorList, actorHome]);
+
+        const [updatedProjectResult] = await connection.query<RowDataPacket[]>('SELECT * FROM home_actors WHERE id_home_actors = ?', [actorHome]);
         connection.release();
+
+        if (updatedProjectResult.length > 0) {
+            return updatedProjectResult[0] as HomeActor;
+        } else {
+            return null
+        }
     } catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;
@@ -160,21 +181,30 @@ export const findNews = async (): Promise<HomeNews[]> => {
     }
 };
 
-// /**
-//  * Update news from home page
-//  * @returns {Promise<HomeNews[]>} - A Promise that resolves with an array of all news or rejects with an error.
-//  * @throws {Error} - Throws an error if there was an issue retrieving the projects.
-//  */
-// export const updateNews = async (name: string, resume: string, date: Date, s3_image_key: string, isInsta: boolean, linkInsta: string | null, idNews: number): Promise<void> => {
-//     try {
-//         const connection = await createDBConnection();
-//         await connection.query('UPDATE home_news SET name = ?, resume = ?, date = ?, s3_image_key = ?, isInsta = ?, linkInsta = ? WHERE id_news = ?', [name, resume, date, s3_image_key, isInsta, linkInsta, idNews]);
-//         connection.release();
-//     } catch (error) {
-//         console.error('Erreur lors de la requête: ', error);
-//         throw error;
-//     }
-// };
+/**
+ * Update news from home page
+ * @returns {Promise<HomeNews[]>} - A Promise that resolves with an array of updated new or rejects with an error.
+ * @throws {Error} - Throws an error if there was an issue update the new.
+ */
+export const updateNews = async (news: HomeNews): Promise<HomeNews | null> => {
+    try {
+        const connection = await createDBConnection();
+        await connection.query<OkPacket>('UPDATE home_news SET name = ?, resume = ?, date = ?, s3_image_key = ?, isInsta = ?, linkInsta = ? WHERE id_news = ?', [news.name, news.resume, news.date, news.s3_image_key, news.isInsta, news.linkInsta, news.id_news]);
+
+        const [updatedNewsResult] = await connection.query<RowDataPacket[]>('SELECT * FROM home_news WHERE id_news = ?', [news.id_news]);
+        connection.release();
+
+        if (updatedNewsResult.length > 0) {
+            return updatedNewsResult[0] as HomeNews;
+        } else {
+            return null
+        }
+
+    } catch (error) {
+        console.error('Erreur lors de la requête: ', error);
+        throw error;
+    }
+};
 
 /**
  * Return all partner from home page
@@ -198,11 +228,20 @@ export const findPartner = async (): Promise<HomePartner[]> => {
  * @returns {Promise<HomePartner[]>} - A Promise that resolves with an array of all partners or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the partners.
  */
-export const updatePartner = async (name: string, s3_image_key: string, idPartner: number): Promise<void> => {
+export const updatePartner = async (name: string, s3_image_key: string, idPartner: number): Promise<HomePartner | null> => {
     try {
         const connection = await createDBConnection();
         await connection.query('UPDATE home_partner SET name = ?, s3_image_key = ? WHERE id_partner = ?', [name, s3_image_key, idPartner]);
+
+        const [updatedPartnerResult] = await connection.query<RowDataPacket[]>('SELECT * FROM home_partner WHERE id_partner = ?', [idPartner]);
         connection.release();
+
+        if (updatedPartnerResult.length > 0) {
+            return updatedPartnerResult[0] as HomePartner;
+        } else {
+            return null
+        }
+
     } catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;

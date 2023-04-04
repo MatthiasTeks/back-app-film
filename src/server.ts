@@ -1,6 +1,6 @@
 import express, { Application, Request, Response } from 'express';
-import { PoolConnection } from 'mysql2/promise';
 import morgan from 'morgan';
+import chalk from 'chalk';
 
 import { setupRoutes } from './routes';
 import { createDBConnection } from "./config/database";
@@ -23,16 +23,39 @@ app.use(express.urlencoded({ extended: true }));
 setupRoutes(app);
 
 // TEST CONNECTION
-app.get('/', async (req: Request, res: Response) => {
-  try {
-    const connection = await createDBConnection();
-    const [rows] = await connection.query('SELECT * FROM projet');
-    res.json(rows);
-    connection.release();
-  } catch (err) {
-      console.error('Erreur lors de la requête :', err);
-      res.status(500).send('Erreur lors de la requête');
-  }
+app.get('/', (req: Request, res: Response) => {
+    const message = 'API Films de la Bande';
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Bienvenue</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #e1e1e1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    margin: 0;
+                }
+                h1 {
+                    font-size: 3rem;
+                    color: #ffffff;
+                    background-color: #000000;
+                    padding: 20px;
+                    border-radius: 10px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>${message}</h1>
+        </body>
+    </html>
+  `);
 });
 
 app.listen(port, () =>  {

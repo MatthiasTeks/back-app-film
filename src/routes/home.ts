@@ -1,61 +1,82 @@
 import express, { Request, Response } from 'express';
+import multer from "multer";
 
-import {findActor, findMedia, findNews, findPartner, updateActor, updatePartner} from "../models/home";
+import {
+    findMedia,
+    findNews,
+    findPartner,
+    findProject,
+    updateMedia, updateNews,
+    updatePartner, updateProject
+} from "../models/home";
 
 const homeRouter = express.Router();
+
+// Multer storage configuration for handling file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage })
 
 /**
 * Retrieve home media video.
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
-* @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
+* @returns {Promise<void>} - A Promise that resolves with the mediaHome or rejects with an error.
 * @throws {Error} - Throws an error if the record was not found or if the provided data is invalid.
 */
 homeRouter.get('/media', async (req: Request, res: Response) => {
     try {
         const media = await findMedia();
-        if (media) {
-            res.status(200).json(media);
-        } else {
-            res.status(404).json({ message: 'media not found' });
-        }
+        media ? res.status(200).json(media) : res.status(404).json({ message: 'media not found' });
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving media from database', error: err });
     }
 });
 
 /**
-* Retrieve actor from home page.
-* @param {Request} req - The client request.
-* @param {Response} res - The server response.
-* @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
-* @throws {Error} - Throws an error if the record was not found or if the provided data is invalid.
-*/
-homeRouter.get('/actor', async (req: Request, res: Response) => {
+ * Update media in home page
+ * @param {Request} req - The client request.
+ * @param {Response} res - The server response.
+ * @returns {Promise<void>} - A Promise that resolves with the updated mediaHome or rejects with an error.
+ * @throws {Error} - Throws an error if the record was not found or if the provided data is invalid.
+ */
+homeRouter.post('/media/update', upload.fields([{name: 's3_video_key'}]), async (req: Request, res: Response) => {
+    const { file } = req.body;
     try {
-        const actors = await findActor();
-        if (actors) {
-            res.status(200).json(actors);
-        } else {
-            res.status(404).json({ message: 'actors_home not found' });
-        }
+        const media = await updateMedia(file);
+        media ? res.status(200).json(media) : res.status(404).json({ message: 'media not updated' });
     } catch (err) {
-        res.status(500).json({ message: 'Error retrieving actors_home from database', error: err });
+        res.status(500).json({ message: 'Error updating mediaHome from database', error: err });
     }
 });
 
 /**
-* Update actor in home page
+* Retrieve project from home page.
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
 * @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
 * @throws {Error} - Throws an error if the record was not found or if the provided data is invalid.
 */
-homeRouter.post('/actor/update', async (req: Request, res: Response) => {
+homeRouter.get('/project', async (req: Request, res: Response) => {
+    try {
+        const project = await findProject();
+        project ? res.status(200).json(project) : res.status(404).json({ message: 'project not found' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error retrieving projects_home from database', error: err });
+    }
+});
+
+/**
+* Update project in home page
+* @param {Request} req - The client request.
+* @param {Response} res - The server response.
+* @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
+* @throws {Error} - Throws an error if the record was not found or if the provided data is invalid.
+*/
+homeRouter.post('/project/update', async (req: Request, res: Response) => {
     const { actorList, actorHome } = req.body;
     try {
-        const actor = await updateActor(actorList, actorHome);
-        res.status(200).json(actor);
+        const actor = await updateProject(actorList, actorHome);
+        actor ? res.status(200).json(actor) : res.status(404).json({ message: 'actor not updated' });
     } catch (err) {
         res.status(500).json({ message: 'Error updating updateActor from database', error: err });
     }
@@ -65,19 +86,32 @@ homeRouter.post('/actor/update', async (req: Request, res: Response) => {
 * Get news from home page
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
-* @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
+* @returns {Promise<void>} - A Promise that resolves with the news or rejects with an error.
 * @throws {Error} - Throws an error if the record was not found or if the provided data is invalid.
 */
 homeRouter.get('/news', async (req: Request, res: Response) => {
     try {
         const news = await findNews();
-        if (news) {
-            res.status(200).json(news);
-        } else {
-            res.status(404).json({ message: 'news_home not found' });
-        }
+        news ? res.status(200).json(news) : res.status(404).json({ message: 'news not found' });
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving news_home from database', error: err });
+    }
+});
+
+/**
+ * Update news in home page based on id
+ * @param {Request} req - The client request.
+ * @param {Response} res - The server response.
+ * @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
+ * @throws {Error} - Throws an error if the record was not found or if the provided data is invalid.
+ */
+homeRouter.post('/news/update', async (req: Request, res: Response) => {
+    const newsHome = req.body.news;
+    try {
+        const news = await updateNews(newsHome);
+        news ? res.status(200).json(news) : res.status(404).json({ message: 'news not updated' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating updateActor from database', error: err });
     }
 });
 
@@ -85,17 +119,13 @@ homeRouter.get('/news', async (req: Request, res: Response) => {
 * Get partner from home page
 * @param {Request} req - The client request.
 * @param {Response} res - The server response.
-* @returns {Promise<void>} - A Promise that resolves with the updated project or rejects with an error.
-* @throws {Error} - Throws an error if the record was not found or if the provided data is invalid.
+* @returns {Promise<void>} - A Promise that resolves with all partner or rejects with an error.
+* @throws {Error} - Throws an error if the partners was not found or if the provided data is invalid.
 */
 homeRouter.get('/partner', async (req: Request, res: Response) => {
     try {
         const partner = await findPartner();
-        if (partner) {
-            res.status(200).json(partner);
-        } else {
-            res.status(404).json({ message: 'partner_home not found' });
-        }
+        partner ? res.status(200).json(partner) : res.status(404).json({ message: 'partner not found' });
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving partner_home from database', error: err });
     }
@@ -112,7 +142,7 @@ homeRouter.post('/partner/update', async (req: Request, res: Response) => {
     const { name, media, idPartner } = req.body;
     try {
         const partner = await updatePartner(name, media, idPartner);
-        res.status(200).json(partner);
+        partner ? res.status(200).json(partner) : res.status(404).json({ message: 'partner not updated' });
     } catch (err) {
         res.status(500).json({ message: 'Error updating updatePartner from database', error: err });
     }
