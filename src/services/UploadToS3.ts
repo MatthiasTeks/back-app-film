@@ -1,27 +1,40 @@
-import { S3 } from "aws-sdk";
-import { config } from "../config";
+import {S3} from 'aws-sdk';
 
-/**
- * @name uploadToS3
- * @param {S3} s3
- * @param {File} fileData?
- * @returns {Promise<{success:boolean; message: string; data: object;}>}
- */
-export const uploadToS3 = async (s3: S3, fileData?: { fieldname: string; size: number; originalname: string; mimetype: string; buffer: Buffer; encoding: string }) => {
-    try {
-        const params = {
-            Bucket: config.bucket_name,
-            Key: fileData!.originalname,
-            Body: fileData!.buffer
-        };
+import {config} from '../config';
 
-        try {
-            const res = await s3.upload(params).promise();
-            return {success: true, message: "File Uploaded with Successfully", data: res.Location};
-        } catch (error) {
-            return {success: false, message: "Unable to Upload the file", data: error};
-        }
-    } catch (error) {
-        return {success:false, message: "Unable to access this file", data: {}};
-    }
-}
+// Create an S3 instance with the AWS API credentials
+export const s3 = new S3({
+    accessKeyId: config.aws_access_key_id,
+    secretAccessKey: config.aws_secret_access_key,
+});
+
+// Function to upload a file to an S3 bucket
+export const uploadFileToS3 = async (file: Express.Multer.File): Promise<string> => {
+    // Retrieving information from the file
+    const { originalname, mimetype, buffer } = file;
+
+    // Construction of the object to be sent to S3
+    const params = {
+        Bucket: config.bucket_name,
+        Key: originalname,
+        Body: buffer,
+        ContentType: mimetype,
+    };
+
+    // Sending the file to S3
+    const s3Response = await s3.upload(params).promise();
+
+    // Forwarding the file URL to S3
+    return s3Response.Location;
+};
+
+// Function to upload multiple files to an S3 bucket
+export const uploadFilesToS3 = async (files: Express.Multer.File[]): Promise<string[]> => {
+    // Creation of a table of promises for the sending of each file
+    const promises = files.map(async (file) => {
+        return await uploadFileToS3(file);
+    });
+
+    // Return file URLs to S3
+    return await Promise.all(promises);
+};

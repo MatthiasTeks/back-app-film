@@ -28,13 +28,13 @@ app.get('/', async (req: Request, res: Response) => {
     const connection = await createDBConnection();
     const [rows] = await connection.query('SELECT * FROM projet');
     res.json(rows);
-    (connection as PoolConnection).release();
+    connection.release();
   } catch (err) {
       console.error('Erreur lors de la requête :', err);
       res.status(500).send('Erreur lors de la requête');
   }
 });
 
-app.listen(port, () => {
+app.listen(port, () =>  {
   console.log(`Server listening on http://localhost:${port}`);
 });

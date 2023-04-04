@@ -14,7 +14,7 @@ const setupRoutes = (app: Application): void => {
     app.use('/home', homeRouter);
     app.use('/auth', authRouter);
     app.use('/newsletter', newsletterRouter);
-    app.use('/projet', projectRouter);
+    app.use('/project', projectRouter);
 };
 
 export { setupRoutes };
