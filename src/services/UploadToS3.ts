@@ -1,4 +1,5 @@
-import {S3} from 'aws-sdk';
+import { Upload } from "@aws-sdk/lib-storage";
+import { S3 } from "@aws-sdk/client-s3";
 
 import {config} from '../config';
 
@@ -14,7 +15,7 @@ export const deleteFileFromS3 = async (key: string): Promise<void> => {
         Key: key,
     };
 
-    await s3.deleteObject(params).promise();
+    await s3.deleteObject(params);
 };
 
 // Function to upload a file to an S3 bucket
@@ -31,7 +32,10 @@ export const uploadFileToS3 = async (file: Express.Multer.File): Promise<string>
     };
 
     // Sending the file to S3
-    const s3Response = await s3.upload(params).promise();
+    const s3Response = await new Upload({
+        client: s3,
+        params
+    }).done();
 
     // Forwarding the file URL to S3
     return s3Response.Location;
