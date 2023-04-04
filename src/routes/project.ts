@@ -3,6 +3,7 @@ import multer from "multer";
 import { config } from "../config";
 import { s3 } from "../services/UploadToS3";
 import { uploadFileToS3 } from "../services/UploadToS3";
+import { sendResponse } from "../services/SendResponse";
 
 import {
     validateProject,
@@ -15,6 +16,7 @@ import {
     updateProject,
     destroyProject,
 } from "../models/project";
+
 
 
 const projectRouter = express.Router();
@@ -33,7 +35,7 @@ const upload = multer({ storage })
 projectRouter.get('/', async (req: Request, res: Response) => {
     try {
         const project = await findAllProject();
-        project ? res.status(200).json(project) : res.status(404).json({ message: 'project not found' });
+        sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err });
     }
@@ -105,7 +107,7 @@ projectRouter.get('/page', async (req: Request, res: Response): Promise<void> =>
         const page = parseInt(req.query.page as string, 10);
         const type = req.query.type as string;
         const project = await findPageProjectOnType(page, type)
-        project ? res.status(200).json(project) : res.status(404).json({ message: 'project not found' });
+        sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err })
     }
@@ -122,7 +124,7 @@ projectRouter.get('/gender/:gender', async (req: Request, res: Response): Promis
     try {
         const gender = req.params.gender as string;
         const project = await findProjectByGender(gender)
-        project ? res.status(200).json(project) : res.status(404).json({ message: 'project not found' });
+        sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err })
     }
@@ -139,7 +141,7 @@ projectRouter.get('/label/:label', async (req: Request, res: Response): Promise<
     try {
         const name = req.params.label as string;
         const project = await findProjectByLabel(name)
-        project ? res.status(200).json(project) : res.status(404).json({ message: 'project not found' });
+        sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err })
     }

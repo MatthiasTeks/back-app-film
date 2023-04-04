@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import multer from "multer";
+import { sendResponse } from "../services/SendResponse";
 
 import {
     findMedia,
@@ -9,6 +10,7 @@ import {
     updateMedia, updateNews,
     updatePartner, updateProject
 } from "../models/home";
+
 
 const homeRouter = express.Router();
 
@@ -26,7 +28,7 @@ const upload = multer({ storage })
 homeRouter.get('/media', async (req: Request, res: Response) => {
     try {
         const media = await findMedia();
-        media ? res.status(200).json(media) : res.status(404).json({ message: 'media not found' });
+        sendResponse(res, media, 'media not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving media from database', error: err });
     }
@@ -43,7 +45,7 @@ homeRouter.post('/media/update', upload.fields([{name: 's3_video_key'}]), async 
     const { file } = req.body;
     try {
         const media = await updateMedia(file);
-        media ? res.status(200).json(media) : res.status(404).json({ message: 'media not updated' });
+        sendResponse(res, media, 'media not updated');
     } catch (err) {
         res.status(500).json({ message: 'Error updating mediaHome from database', error: err });
     }
@@ -59,7 +61,7 @@ homeRouter.post('/media/update', upload.fields([{name: 's3_video_key'}]), async 
 homeRouter.get('/project', async (req: Request, res: Response) => {
     try {
         const project = await findProject();
-        project ? res.status(200).json(project) : res.status(404).json({ message: 'project not found' });
+        sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving projects_home from database', error: err });
     }
@@ -75,8 +77,8 @@ homeRouter.get('/project', async (req: Request, res: Response) => {
 homeRouter.post('/project/update', async (req: Request, res: Response) => {
     const { actorList, actorHome } = req.body;
     try {
-        const actor = await updateProject(actorList, actorHome);
-        actor ? res.status(200).json(actor) : res.status(404).json({ message: 'actor not updated' });
+        const project = await updateProject(actorList, actorHome);
+        sendResponse(res, project, 'project not updated');
     } catch (err) {
         res.status(500).json({ message: 'Error updating updateActor from database', error: err });
     }
@@ -92,7 +94,7 @@ homeRouter.post('/project/update', async (req: Request, res: Response) => {
 homeRouter.get('/news', async (req: Request, res: Response) => {
     try {
         const news = await findNews();
-        news ? res.status(200).json(news) : res.status(404).json({ message: 'news not found' });
+        sendResponse(res, news, 'news not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving news_home from database', error: err });
     }
@@ -109,9 +111,9 @@ homeRouter.post('/news/update', async (req: Request, res: Response) => {
     const newsHome = req.body.news;
     try {
         const news = await updateNews(newsHome);
-        news ? res.status(200).json(news) : res.status(404).json({ message: 'news not updated' });
+        sendResponse(res, news, 'news not updated');
     } catch (err) {
-        res.status(500).json({ message: 'Error updating updateActor from database', error: err });
+        res.status(500).json({ message: 'Error updating updateNews from database', error: err });
     }
 });
 
@@ -125,9 +127,9 @@ homeRouter.post('/news/update', async (req: Request, res: Response) => {
 homeRouter.get('/partner', async (req: Request, res: Response) => {
     try {
         const partner = await findPartner();
-        partner ? res.status(200).json(partner) : res.status(404).json({ message: 'partner not found' });
+        sendResponse(res, partner, 'partner not found');
     } catch (err) {
-        res.status(500).json({ message: 'Error retrieving partner_home from database', error: err });
+        res.status(500).json({ message: 'Error retrieving partnerHome from database', error: err });
     }
 });
 
@@ -142,7 +144,7 @@ homeRouter.post('/partner/update', async (req: Request, res: Response) => {
     const { name, media, idPartner } = req.body;
     try {
         const partner = await updatePartner(name, media, idPartner);
-        partner ? res.status(200).json(partner) : res.status(404).json({ message: 'partner not updated' });
+        sendResponse(res, partner, 'partner not updated');
     } catch (err) {
         res.status(500).json({ message: 'Error updating updatePartner from database', error: err });
     }
