@@ -1,9 +1,7 @@
 import express, { Application, Request, Response } from 'express';
 import morgan from 'morgan';
-import chalk from 'chalk';
 
 import { setupRoutes } from './routes';
-import { createDBConnection } from "./config/database";
 import { corsMiddleware } from './middlewares/cors';
 
 import dotenv, { DotenvConfigOptions } from 'dotenv';

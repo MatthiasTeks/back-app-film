@@ -14,3 +14,4 @@ exports.dbConfig = {
     database: process.env.DB_DATABASE,
     connectionLimit: 10,
 };
+//# sourceMappingURL=db.js.map

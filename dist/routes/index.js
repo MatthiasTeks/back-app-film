@@ -7,7 +7,7 @@ exports.setupRoutes = void 0;
 const home_1 = __importDefault(require("./home"));
 const auth_1 = __importDefault(require("./auth"));
 const newsletter_1 = __importDefault(require("./newsletter"));
-const projet_1 = __importDefault(require("./projet"));
+const project_1 = __importDefault(require("./project"));
 /**
  * Sets up routes for the Express application.
  * @function
@@ -18,6 +18,7 @@ const setupRoutes = (app) => {
     app.use('/home', home_1.default);
     app.use('/auth', auth_1.default);
     app.use('/newsletter', newsletter_1.default);
-    app.use('/projet', projet_1.default);
+    app.use('/project', project_1.default);
 };
 exports.setupRoutes = setupRoutes;
+//# sourceMappingURL=index.js.map

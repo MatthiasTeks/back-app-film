@@ -12,45 +12,56 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyPassword = exports.findByEmail = exports.validate = void 0;
-const database_1 = require("../config/database");
-const joi_1 = __importDefault(require("joi"));
+exports.verifyAdminPassword = exports.findAdminByMail = exports.hashingOptions = void 0;
 const argon2_1 = __importDefault(require("argon2"));
-const hashingOptions = {
+const database_1 = require("../config/database");
+exports.hashingOptions = {
     type: argon2_1.default.argon2d,
     memoryCost: Math.pow(2, 16),
     timeCost: 10,
     parallelism: 2,
     hashLength: 50,
 };
-const validate = (data, forCreation = true) => {
-    const presence = forCreation ? 'required' : 'optional';
-    return joi_1.default.object({
-        mail: joi_1.default.string().email().max(255).presence(presence),
-        password: joi_1.default.string().min(8).max(50).presence(presence),
-    }).validate(data, { abortEarly: false }).error;
-};
-exports.validate = validate;
-const findByEmail = (mail) => __awaiter(void 0, void 0, void 0, function* () {
+/**
+ * Finds an admin user by their email address.
+ * @param {string} mail - The email address of the admin user to find.
+ * @returns {Promise<Admin | undefined>} A promise that resolves to an Admin object or undefined if no admin is found.
+ * @throws {Error} Will throw an error if there is an issue with the database query.
+ */
+const findAdminByMail = (mail) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const connection = yield (0, database_1.getConnection)();
-        const [results] = yield connection.query('SELECT * FROM admin WHERE mail = ?', [mail]);
+        const connection = yield (0, database_1.createDBConnection)();
+        const [result] = yield connection.query('SELECT * FROM admin WHERE mail = ?', [mail]);
         connection.release();
-        return results[0];
+        if (result.length === 0) {
+            return undefined;
+        }
+        return {
+            mail: result[0].mail,
+            password: ''
+        };
     }
     catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;
     }
 });
-exports.findByEmail = findByEmail;
-const verifyPassword = (plainPassword, hashedPassword) => __awaiter(void 0, void 0, void 0, function* () {
+exports.findAdminByMail = findAdminByMail;
+/**
+ * Verifies if a given plain password matches a hashed password using Argon2.
+ * @param {string} plainPassword - The plain text password to verify.
+ * @param {string} hashedPassword - The hashed password to compare against.
+ * @returns {Promise<boolean>} - A promise that resolves to true if the plain password matches the hashed password, or false otherwise.
+ * @throws {Error} - If there's an error during the verification process, the error will be logged and thrown.
+ */
+const verifyAdminPassword = (plainPassword, hashedPassword) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        return yield argon2_1.default.verify(hashedPassword, plainPassword, hashingOptions);
+        return yield argon2_1.default.verify(hashedPassword, plainPassword, exports.hashingOptions);
     }
     catch (error) {
         console.error('Erreur lors de la vérification du mot de passe: ', error);
         throw error;
     }
 });
-exports.verifyPassword = verifyPassword;
+exports.verifyAdminPassword = verifyAdminPassword;
+//# sourceMappingURL=auth.js.map

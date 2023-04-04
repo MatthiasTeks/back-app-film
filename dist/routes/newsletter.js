@@ -13,26 +13,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const newsletter_1 = __importDefault(require("../models/newsletter"));
+const newsletter_1 = require("../models/newsletter");
 const newsletterRouter = express_1.default.Router();
 /**
 * Retrieve all newsletters.
-* @async
-* @function
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @returns {Promise<void>} - A Promise that resolves with an array of newsletter records or rejects with an error.
+* @throws {Error} - Throws an error if there was an issue retrieving the newsletter records.
 */
 newsletterRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const newsletter = yield newsletter_1.default.findMany();
-        if (newsletter) {
-            res.status(200).json(newsletter);
-        }
-        else {
-            res.status(404).json({ message: 'newsletter not found' });
-        }
+        const newsletter = yield (0, newsletter_1.findAllNewsletter)();
+        newsletter ? res.status(200).json(newsletter) : res.status(404).json({ message: 'newsletter not found' });
     }
     catch (err) {
         res.status(500).json({ message: 'Error retrieving newsletter from database', error: err });
@@ -40,23 +33,16 @@ newsletterRouter.get('/', (req, res) => __awaiter(void 0, void 0, void 0, functi
 }));
 /**
 * Retrieve specific newsletter by mail address.
-* @async
-* @function
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @returns {Promise<void>} - A Promise that resolves with an array of newsletter records or rejects with an error.
+* @throws {Error} - Throws an error if there was an issue retrieving the newsletter records.
 */
 newsletterRouter.get('/:mail', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const mail = req.query.mail;
-        const newsletter = yield newsletter_1.default.findOne(mail);
-        if (newsletter) {
-            res.status(200).json(newsletter);
-        }
-        else {
-            res.status(404).json({ message: 'newsletter not found' });
-        }
+        const newsletter = yield (0, newsletter_1.findNewsletterByMail)(mail);
+        newsletter ? res.status(200).json(newsletter) : res.status(404).json({ message: 'newsletter not found' });
     }
     catch (err) {
         res.status(500).json({ message: 'Error retrieving newsletter from database', error: err });
@@ -64,27 +50,25 @@ newsletterRouter.get('/:mail', (req, res) => __awaiter(void 0, void 0, void 0, f
 }));
 /**
 * Create a new newsletter
-* @async
-* @function
 * @param {Request} req - The HTTP request object.
 * @param {Response} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @returns {Promise<void>} - A Promise that resolves with new newsletter records or rejects with an error.
+* @throws {Error} - Throws an error if there was an issue creating the newsletter records.
 */
 newsletterRouter.post('/create', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const error = newsletter_1.default.validate(req.body);
+        const error = (0, newsletter_1.validateNewsletter)(req.body);
         if (error) {
             res.status(422).json({ validation: error.details });
         }
         else {
             const lowercaseMail = req.body.actor_name.mail.toLowerCase();
-            const mailExist = yield newsletter_1.default.findOne(lowercaseMail);
+            const mailExist = yield (0, newsletter_1.findNewsletterByMail)(lowercaseMail);
             if (mailExist) {
                 res.status(409).json({ message: "Newsletter with the same mail already exists" });
             }
             else {
-                const createdNewsletter = yield newsletter_1.default.create(req.body);
+                const createdNewsletter = yield (0, newsletter_1.createNewsletter)(req.body);
                 res.status(201).json(createdNewsletter);
             }
         }
@@ -93,4 +77,29 @@ newsletterRouter.post('/create', (req, res) => __awaiter(void 0, void 0, void 0,
         res.status(500).json({ message: 'Error saving the newsletter', error: err });
     }
 }));
+/**
+ * Delete newsletter record by id.
+ * @param {Object} req - The HTTP request object.
+ * @param {Object} res - The HTTP response object.
+ * @returns {Promise<void>} - A Promise that resolves with the newsletter record or rejects with an error.
+ * @throws {Error} - Throws an error if there was an issue retrieving the newsletter record.
+ */
+newsletterRouter.delete('/delete/:mail', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const mail = req.params.mail;
+        const newsletter = yield (0, newsletter_1.findNewsletterByMail)(mail);
+        if (!newsletter) {
+            res.status(404).json({ message: 'Newsletter not found' });
+        }
+        else {
+            const result = yield (0, newsletter_1.destroyNewsletter)(mail);
+            result ? res.status(204).json(result) : res.status(500).json({ message: 'newsletter not deleted' });
+        }
+    }
+    catch (error) {
+        console.error('An error occurred while deleting the newsletter ', error);
+        res.status(500).json({ message: 'An error occurred while deleting the newsletters' });
+    }
+}));
 exports.default = newsletterRouter;
+//# sourceMappingURL=newsletter.js.map

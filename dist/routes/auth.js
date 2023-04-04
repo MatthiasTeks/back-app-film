@@ -4,11 +4,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const Auth = require('../models/auth');
-const jwt = require('jsonwebtoken');
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const auth_1 = require("../models/auth");
 const authRouter = express_1.default.Router();
-/* GET TOKEN FROM USER */
-const getToken = req => {
+/**
+ * Retrieves the token from the request's authorization header or query parameter.
+ * @function
+ * @param {Request} req - The request object.
+ * @returns {string | null} - Returns the token as a string if found, or null if not found.
+ */
+const getToken = (req) => {
     if (req.headers.authorization &&
         req.headers.authorization.split(' ')[0] === 'Bearer') {
         return req.headers.authorization.split(' ')[1];
@@ -18,42 +23,22 @@ const getToken = req => {
     }
     return null;
 };
-/* CREATE NEW ADMIN */
-authRouter.post('/create', (req, res) => {
-    const { email } = req.body;
-    let validationErrors = null;
-    Auth.findByEmail(email)
-        .then((existingUserWithEmail) => {
-        if (existingUserWithEmail)
-            return Promise.reject('DUPLICATE_EMAIL');
-        validationErrors = Auth.validate(req.body);
-        if (validationErrors)
-            return Promise.reject('INVALID_DATA');
-        return Auth.create(req.body);
-    })
-        .then((createdUser) => {
-        res.status(201).json(createdUser);
-    })
-        .catch((err) => {
-        console.error(err);
-        if (err === 'DUPLICATE_EMAIL')
-            res.status(409).json({ message: 'This email is already used' });
-        else if (err === 'INVALID_DATA')
-            res.status(422).json({ validationErrors });
-        else
-            res.status(500).send('Error saving the user');
-    });
-});
-/* CONNEXION TO ADMIN PANEL */
+/**
+ * Handles the login process for an admin user.
+ * Verifies the user's email and password, then generates and sends a JWT token.
+ * @route {POST} /login
+ * @param {Request} req - The request object, containing the email and password in the request body.
+ * @param {Response} res - The response object, used to send status and token back to the client.
+ */
 authRouter.post("/login", (req, res) => {
     const { email, password } = req.body;
-    Auth.findByEmail(email)
+    (0, auth_1.findAdminByMail)(email)
         .then((admin) => {
         if (!admin)
             res.status(401).send("Invalid credentials");
         else {
             /* VERIFY PASSWORD */
-            Auth.verifyPassword(password, admin.password)
+            (0, auth_1.verifyAdminPassword)(password, admin.password)
                 .then((passwordIsCorrect) => {
                 if (passwordIsCorrect) {
                     const tokenUserInfo = {
@@ -70,10 +55,9 @@ authRouter.post("/login", (req, res) => {
                 .then(tokenUserInfo => {
                 if (tokenUserInfo !== undefined) {
                     console.log('token', tokenUserInfo);
-                    const token = jwt.sign(tokenUserInfo, process.env.JWT_SECRET);
+                    const token = jsonwebtoken_1.default.sign(tokenUserInfo, process.env.JWT_SECRET);
                     res.header('Access-Control-Expose-Headers', 'x-access-token');
                     res.set('x-access-token', token);
-                    console.log('succed');
                     res.status(200).send({ mess: 'admin connected' });
                 }
             })
@@ -89,10 +73,15 @@ authRouter.post("/login", (req, res) => {
         }
     });
 });
-/* VERIFY NAVIGATOR TOKEN TO AUTHORIZE ACCESS TO ADMIN PAGE */
+/**
+ * Verifies if the token provided in the request is valid, granting or denying access to a protected resource.
+ * @route {POST} /protected
+ * @param {Request} req - The request object, containing the token either in the authorization header or as a query parameter.
+ * @param {Response} res - The response object, used to send the access status back to the client.
+ */
 authRouter.post('/protected', (req, res) => {
     const token = getToken(req);
-    jwt.verify(token, process.env.JWT_SECRET, (err, decode) => {
+    jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET, (err) => {
         if (err) {
             return res.status(403).send({ access: false });
         }
@@ -102,3 +91,4 @@ authRouter.post('/protected', (req, res) => {
     });
 });
 exports.default = authRouter;
+//# sourceMappingURL=auth.js.map

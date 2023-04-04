@@ -1,13 +1,18 @@
 import { Upload } from "@aws-sdk/lib-storage";
-import { S3 } from "@aws-sdk/client-s3";
+import { S3, S3ClientConfig } from "@aws-sdk/client-s3";
 
-import {config} from '../config';
+import { config } from '../config';
 
 // Create an S3 instance with the AWS API credentials
-export const s3 = new S3({
-    accessKeyId: config.aws_access_key_id,
-    secretAccessKey: config.aws_secret_access_key,
-});
+const s3Config: S3ClientConfig = {
+    credentials: {
+        accessKeyId: config.aws_access_key_id,
+        secretAccessKey: config.aws_secret_access_key,
+    },
+    region: config.aws_region,
+};
+
+export const s3 = new S3(s3Config);
 
 export const deleteFileFromS3 = async (key: string): Promise<void> => {
     const params = {
@@ -32,22 +37,11 @@ export const uploadFileToS3 = async (file: Express.Multer.File): Promise<string>
     };
 
     // Sending the file to S3
-    const s3Response = await new Upload({
+    await new Upload({
         client: s3,
         params
     }).done();
 
     // Forwarding the file URL to S3
-    return s3Response.Location;
-};
-
-// Function to upload multiple files to an S3 bucket
-export const uploadFilesToS3 = async (files: Express.Multer.File[]): Promise<string[]> => {
-    // Creation of a table of promises for the sending of each file
-    const promises = files.map(async (file) => {
-        return await uploadFileToS3(file);
-    });
-
-    // Return file URLs to S3
-    return await Promise.all(promises);
+    return `https://${config.bucket_name}.s3.${config.aws_region}.amazonaws.com/${originalname}`;
 };

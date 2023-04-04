@@ -12,17 +12,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.destroy = exports.create = exports.findOne = exports.findMany = exports.validate = void 0;
-const { getConnection } = require('../config/database.js');
+exports.destroyNewsletter = exports.createNewsletter = exports.findNewsletterByMail = exports.findAllNewsletter = exports.validateNewsletter = void 0;
 const joi_1 = __importDefault(require("joi"));
+const database_1 = require("../config/database");
 /**
 * Validates a newsletter object based on the provided data.
-* @function
 * @param {Newsletter} data - The newsletter object to be validated.
 * @param {boolean} [forCreation=true] - A flag to indicate whether the validation is for creation (required fields) or not (optional fields).
 * @returns {ValidationError | undefined} - Returns a ValidationError if the data is invalid, otherwise returns undefined.
 */
-const validate = (data, forCreation = true) => {
+const validateNewsletter = (data, forCreation = true) => {
     const presence = forCreation ? 'required' : 'optional';
     return joi_1.default.object({
         id_newsletter: joi_1.default.number(),
@@ -30,61 +29,64 @@ const validate = (data, forCreation = true) => {
         consent: joi_1.default.number().max(10).presence(presence),
     }).validate(data, { abortEarly: false }).error;
 };
-exports.validate = validate;
+exports.validateNewsletter = validateNewsletter;
 /**
 * Retrieves all newsletter entries from the database.
-* @async
-* @function
 * @returns {Promise<Array<Newsletter>>} - A Promise that resolves with an array of newsletter entries or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue retrieving the newsletter entries from the database.
 */
-const findMany = () => __awaiter(void 0, void 0, void 0, function* () {
+const findAllNewsletter = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const connection = yield getConnection();
-        const [result] = yield connection.promise().query('SELECT * FROM newsletter');
+        const connection = yield (0, database_1.createDBConnection)();
+        const [result] = yield connection.query('SELECT * FROM newsletter');
         connection.release();
-        return result;
+        return result.map(row => ({
+            mail: row.mail,
+            consent: row.consent
+        }));
     }
     catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;
     }
 });
-exports.findMany = findMany;
+exports.findAllNewsletter = findAllNewsletter;
 /**
 * Retrieves a newsletter entry by its email address.
-* @async
-* @function
 * @param {string} mail - The email address of the newsletter entry to retrieve.
 * @returns {Promise<Newsletter | undefined>} - A Promise that resolves with the newsletter entry if found or undefined if not found, or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue retrieving the newsletter entry from the database.
 */
-const findOne = (mail) => __awaiter(void 0, void 0, void 0, function* () {
+const findNewsletterByMail = (mail) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const connection = yield getConnection();
-        const [result] = yield connection.promise().query('SELECT * FROM newsletter WHERE mail = ?', [mail]);
+        const connection = yield (0, database_1.createDBConnection)();
+        const [result] = yield connection.query('SELECT * FROM newsletter WHERE mail = ?', [mail]);
         connection.release();
-        return result[0];
+        if (result.length === 0) {
+            return undefined;
+        }
+        return {
+            mail: result[0].mail,
+            consent: result[0].consent
+        };
     }
     catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;
     }
 });
-exports.findOne = findOne;
+exports.findNewsletterByMail = findNewsletterByMail;
 /**
 * Inserts a new newsletter entry into the database.
-* @async
-* @function
 * @param {Newsletter} { mail, consent } - The newsletter object containing the email address and consent status.
 * @returns {Promise<Newsletter>} - A Promise that resolves with the created newsletter entry or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue inserting the newsletter entry into the database.
 */
-const create = ({ mail, consent }) => __awaiter(void 0, void 0, void 0, function* () {
+const createNewsletter = ({ mail, consent }) => __awaiter(void 0, void 0, void 0, function* () {
     const sql = 'INSERT INTO newsletter (mail, consent) VALUES (?, ?)';
     try {
-        const connection = yield getConnection();
-        const [result] = yield connection.promise().query(sql, [mail, consent]);
+        const connection = yield (0, database_1.createDBConnection)();
+        const [result] = yield connection.query(sql, [mail, consent]);
         connection.release();
         const id_newsletter = result.insertId;
         return { id_newsletter, mail, consent };
@@ -94,19 +96,17 @@ const create = ({ mail, consent }) => __awaiter(void 0, void 0, void 0, function
         throw error;
     }
 });
-exports.create = create;
+exports.createNewsletter = createNewsletter;
 /**
 * Deletes a newsletter entry from the database by its email address.
-* @async
-* @function
 * @param {string} mail - The email address of the newsletter entry to be deleted.
 * @returns {Promise<boolean>} - A Promise that resolves with a boolean indicating whether the newsletter entry was deleted or not, or rejects with an error.
 * @throws {Error} - Throws an error if there was an issue deleting the newsletter entry from the database.
 */
-const destroy = (mail) => __awaiter(void 0, void 0, void 0, function* () {
+const destroyNewsletter = (mail) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const connection = yield getConnection();
-        const [result] = yield connection.promise().query('DELETE FROM newsletter WHERE mail = ?', [mail]);
+        const connection = yield (0, database_1.createDBConnection)();
+        const [result] = yield connection.query('DELETE FROM newsletter WHERE mail = ?', [mail]);
         connection.release();
         return result.affectedRows !== 0;
     }
@@ -115,4 +115,5 @@ const destroy = (mail) => __awaiter(void 0, void 0, void 0, function* () {
         throw error;
     }
 });
-exports.destroy = destroy;
+exports.destroyNewsletter = destroyNewsletter;
+//# sourceMappingURL=newsletter.js.map
