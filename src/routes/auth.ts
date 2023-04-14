@@ -1,7 +1,10 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { findAdminByMail, verifyAdminPassword } from "../models/auth";
+import {findAdminByMail, hashingOptions, verifyAdminPassword} from "../models/auth";
+import argon2 from "argon2";
+import {Admin} from "../interface/Interface";
+import {createDBConnection} from "../config/database";
 
 const authRouter = express.Router();
 
@@ -30,44 +33,56 @@ const getToken = (req: Request): string | null => {
  * @param {Request} req - The request object, containing the email and password in the request body.
  * @param {Response} res - The response object, used to send status and token back to the client.
  */
-authRouter.post("/login", (req: Request, res: Response) => {
-    const { email, password } = req.body;
+authRouter.post("/login", async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
+        const admin = await findAdminByMail(email);
 
-    findAdminByMail(email)
-        .then((admin) => {
-            if (!admin) res.status(401).send("Invalid credentials");
-            else {
-                /* VERIFY PASSWORD */
-                verifyAdminPassword(password, admin.password)
-                    .then((passwordIsCorrect) => {
-                        if (passwordIsCorrect) {
-                            const tokenUserInfo = {
-                                email: email,
-                                status: 'PouletMaster'
-                            }
-                            console.log('log', tokenUserInfo)
-                            return tokenUserInfo
-                        } else res.status(401).send("Invalid credentials");
-                    })
-                    /* STORE TOKEN ON NAVIGATOR */
-                    .then(tokenUserInfo => {
-                        if(tokenUserInfo !== undefined){
-                            console.log('token', tokenUserInfo)
-                            const token = jwt.sign(tokenUserInfo, process.env.JWT_SECRET as string)
-                            res.header('Access-Control-Expose-Headers', 'x-access-token')
-                            res.set('x-access-token', token)
-                            res.status(200).send({ mess: 'admin connected' })
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err)
-                        if (err === 'USER_NOT_FOUND') res.status(404).send('User not found')
-                        else if (err === 'ERROR_IDENTIFICATION')
-                            res.status(404).send('Erreur identification')
-                        else res.status(500).send('Error to find a user')
-                    })
-            }
-        })
+        if (!admin) {
+            return res.status(401).send("Invalid credentials");
+        }
+
+        const passwordIsCorrect = await verifyAdminPassword(password, admin.password);
+        if (!passwordIsCorrect) {
+            return res.status(401).send("Invalid credentials");
+        }
+
+        const tokenUserInfo = {
+            email: email,
+            status: 'PouletMaster'
+        };
+
+        const token = jwt.sign(tokenUserInfo, process.env.JWT_SECRET as string);
+
+        res.header('Access-Control-Expose-Headers', 'x-access-token')
+        res.set('x-access-token', token)
+        res.status(200).send({ mess: 'admin connected' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error to find a user');
+    }
+});
+
+authRouter.post("/admin", async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
+
+        // Hash the admin's password
+        const hashedPassword = await argon2.hash(password, hashingOptions);
+
+        const sql = 'INSERT INTO admin (mail, password) VALUES (?, ?)'
+
+        // Insert the new admin into the database
+        const connection = await createDBConnection();
+        const result = await connection.query(sql, [email, hashedPassword]);
+        connection.release();
+
+        // Return a success response
+        res.status(200).send({ message: "Admin created successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error creating admin");
+    }
 });
 
 /**

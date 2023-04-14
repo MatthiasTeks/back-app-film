@@ -37,6 +37,7 @@ const upload = multer({ storage })
 projectRouter.get('/', async (req: Request, res: Response) => {
     try {
         const project = await findAllProject();
+        console.log(project)
         sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err });
@@ -212,32 +213,30 @@ projectRouter.delete('/delete/:id', async (req: Request, res: Response): Promise
  * @returns {Promise<void>} - A Promise that resolves with the signed URL or rejects with an error.
  * @throws {Error} - Throws an error if there was an issue retrieving the project or generating the signed URL.
  */
-projectRouter.get('/:label/sign-url', async (req: Request, res: Response): Promise<void> => {
+projectRouter.get('/:key/sign-url', async (req: Request, res: Response): Promise<void> => {
     try {
-        const label = req.params.label as string;
-        const project = await findProjectByLabel(label);
+        const key = req.params.key as string;
 
-        if (project) {
-            const videoName = project.s3_video_projet_key;
-            const params = {
-                Bucket: config.bucket_name,
-                Key: videoName,
-                Expires: 60 * 60
-            };
+        const params = {
+            Bucket: config.bucket_name,
+            Key: key,
+            Expires: 60 * 60,
+        };
 
-            try {
-                const command = new GetObjectCommand(params);
-                const signedUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-                res.status(200).json({ signedUrl });
-            } catch (err) {
-                res.status(500).json({ message: 'Error generating signed URL', error: err });
-            }
-        } else {
-            res.status(404).json({ message: 'Project not found' });
+        try {
+            await s3.headObject(params);
+
+            const command = new GetObjectCommand(params);
+            const signedUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+            console.log(signedUrl);
+            res.status(200).json({ signedUrl });
+        } catch (err) {
+            res.status(404).json({ message: 'Error retrieving this file name on our bucket', error: err });
         }
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err });
     }
 });
+
 
 export default projectRouter;

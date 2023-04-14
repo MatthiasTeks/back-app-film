@@ -1,4 +1,4 @@
-import { RowDataPacket } from "mysql2";
+import {Connection, RowDataPacket} from "mysql2";
 import argon2 from 'argon2';
 
 import { createDBConnection } from "../config/database";
@@ -8,15 +8,15 @@ import { Admin } from "../interface/Interface";
 interface HashingOptions {
     type: 0 | 1 | 2;
     memoryCost: number;
-    timeCost: number;
+    iterations: number;
     parallelism: number;
     hashLength: number;
 }
 
 export const hashingOptions: HashingOptions = {
-    type: argon2.argon2d,
+    type: argon2.argon2id,
     memoryCost: 2 ** 16,
-    timeCost: 10,
+    iterations: 3,
     parallelism: 2,
     hashLength: 50,
 };
@@ -37,7 +37,7 @@ export const findAdminByMail = async (mail: string): Promise<Admin | undefined> 
         }
         return {
             mail: result[0].mail,
-            password: ''
+            password: result[0].password
         };
     } catch (error) {
         console.error('Erreur lors de la requête: ', error);
@@ -53,7 +53,14 @@ export const findAdminByMail = async (mail: string): Promise<Admin | undefined> 
  * @throws {Error} - If there's an error during the verification process, the error will be logged and thrown.
  */
 export const verifyAdminPassword = async (plainPassword: string, hashedPassword: string): Promise<boolean> => {
+    if (!hashedPassword) {
+        throw new Error('Invalid hashed password');
+    }
+
+    console.log('verify', plainPassword, hashedPassword)
+
     try {
+        console.log(argon2.verify(hashedPassword, plainPassword, hashingOptions))
         return await argon2.verify(hashedPassword, plainPassword, hashingOptions);
     } catch (error) {
         console.error('Erreur lors de la vérification du mot de passe: ', error);

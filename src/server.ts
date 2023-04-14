@@ -1,4 +1,5 @@
 import express, { Application, Request, Response } from 'express';
+
 import morgan from 'morgan';
 
 import { setupRoutes } from './routes';
