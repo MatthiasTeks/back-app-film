@@ -2,7 +2,6 @@ import Joi, { ValidationResult } from 'joi';
 import { OkPacket, RowDataPacket } from "mysql2";
 
 import { createDBConnection } from "../config/database";
-
 import {PartialProject, Project} from '../interface/Interface';
 
 /**
@@ -30,13 +29,13 @@ export const validateProject = (data: Project, forCreation: boolean = true): Val
 
 /**
  * Retrieves all the projects from the database.
- * @returns {Promise<Project[]>} - A Promise that resolves with an array of all the projects or rejects with an error.
- * @throws {Error} - Throws an error if there was an issue retrieving the projects.
+ * @returns {Promise<Project[]>}
+ * @throws {Error}
  */
-export const findAllProject = async (): Promise<Project[]> => {
+export const getAllProject = async (): Promise<Project[]> => {
     try {
         const connection = await createDBConnection();
-        const [result] = await connection.query('SELECT * FROM projet');
+        const [result] = await connection.query('SELECT * FROM project');
         connection.release();
         return result as Project[];
     } catch (error) {
@@ -52,17 +51,34 @@ export const findAllProject = async (): Promise<Project[]> => {
  * @throws {Error} - Throws an error if there was an issue inserting the project.
  */
 export const createProject = async (newAttributes: Project): Promise<Project> => {
-    const {name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date} = newAttributes;
+    const {name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight} = newAttributes;
 
-    const sql = 'INSERT INTO projet (name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO project (name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
     try {
         const connection = await createDBConnection();
-        const [result] = await connection.query<OkPacket>(sql, [name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date]);
+        const [result] = await connection.query<OkPacket>(sql, [name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight]);
         connection.release();
         const id_project = result.insertId;
 
-        return {id_project, name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date} as Project;
+        return {id_project, name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight} as Project;
+    } catch (error) {
+        console.error('Erreur lors de la requête: ', error);
+        throw error;
+    }
+};
+
+/**
+ * Return project highlighted
+ * @returns {Promise<Project[]>}
+ * @throws {Error}
+ */
+export const getProjectHighlighted = async (): Promise<Project[]> => {
+    try {
+        const connection = await createDBConnection();
+        const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project WHERE is_highlight = 1');
+        connection.release();
+        return result as Project[];
     } catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;
@@ -73,13 +89,13 @@ export const createProject = async (newAttributes: Project): Promise<Project> =>
 * Retrieves a page of projects from the database based on the project type.
 * @param {number} page - The page number.
 * @param {string} type - The project type.
-* @returns {Promise<Project[]>} - A Promise that resolves with an array of projects or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the projects.
+* @returns {Promise<Project[]>}
+* @throws {Error}
 */
-export const findPageProjectOnType = async (page: number, type: string): Promise<Project[]> => {
+export const getProjectPageByType = async (page: number, type: string): Promise<Project[]> => {
     const limit = 6;
     const offset = (page - 1) * limit;
-    const sql = `SELECT * FROM projet WHERE type_projet = ? LIMIT ?, ?`;
+    const sql = `SELECT * FROM project WHERE type_projet = ? LIMIT ?, ?`;
     const values = [type, offset, limit];
   
     try {
@@ -96,11 +112,11 @@ export const findPageProjectOnType = async (page: number, type: string): Promise
 /**
 * Retrieves all the projects from the database that match a specific gender.
 * @param {string} gender - The gender to match.
-* @returns {Promise<Project[]>} - A Promise that resolves with an array of matching projects or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the projects.
+* @returns {Promise<Project[]>}
+* @throws {Error}
 */
-export const findProjectByGender = async (gender: string): Promise<Project[]> => {
-    const sql = 'SELECT * FROM projet WHERE gender = ?';
+export const getProjectByGender = async (gender: string): Promise<Project[]> => {
+    const sql = 'SELECT * FROM project WHERE gender = ?';
     try {
         const connection = await createDBConnection();
         const [result] = await connection.query(sql, [gender]);
@@ -115,11 +131,11 @@ export const findProjectByGender = async (gender: string): Promise<Project[]> =>
 /**
 * Retrieves a project from the database based on its label.
 * @param {string} label - The label of the project to retrieve.
-* @returns {Promise<Project>} - A Promise that resolves with the matching project or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project.
+* @returns {Promise<Project>}
+* @throws {Error}
 */
-export const findProjectByLabel = async (label: string): Promise<Project | null> => {
-    const sql = 'SELECT * FROM projet WHERE label = ?';
+export const getProjectByLabel = async (label: string): Promise<Project | null> => {
+    const sql = 'SELECT * FROM project WHERE label = ?';
   
     try {
       const connection = await createDBConnection();
@@ -138,12 +154,12 @@ export const findProjectByLabel = async (label: string): Promise<Project | null>
 
 /**
  * Retrieves a project from the database based on id.
- * @param {number} id - The label of the project to retrieve.
- * @returns {Promise<Project>} - A Promise that resolves with the matching project or rejects with an error.
- * @throws {Error} - Throws an error if there was an issue retrieving the project.
+ * @param {number} id - The id of the project to retrieve.
+ * @returns {Promise<Project>}
+ * @throws {Error}
  */
-export const findProjectById = async (id: number): Promise<Project | null> => {
-    const sql = 'SELECT * FROM projet WHERE id_project = ?';
+export const getProjectById = async (id: number): Promise<Project | null> => {
+    const sql = 'SELECT * FROM project WHERE id_project = ?';
 
     try {
         const connection = await createDBConnection();
@@ -163,10 +179,10 @@ export const findProjectById = async (id: number): Promise<Project | null> => {
 /**
 * Updates an existing project in the database.
 * @param {number} id - The ID of the project to update.
-* @param {PartialProject} newAttributes - The new attributes of the project.
-* @throws {Error} - Throws an error if there was an issue updating the project.
+* @param {PartialProject} newAttributes
+* @throws {Error}
 */
-export const updateProject = async (id: number, newAttributes: PartialProject): Promise<void> => {
+export const updateProjectById = async (id: number, newAttributes: PartialProject): Promise<void> => {
     try {
         const connection = await createDBConnection();
 
@@ -176,7 +192,7 @@ export const updateProject = async (id: number, newAttributes: PartialProject): 
 
         const values = Object.values(newAttributes);
 
-        const sql = `UPDATE projet SET ${setClause} WHERE id_project = ?`;
+        const sql = `UPDATE project SET ${setClause} WHERE id_project = ?`;
 
         await connection.query(sql, [...values, id]);
         connection.release();
@@ -189,13 +205,13 @@ export const updateProject = async (id: number, newAttributes: PartialProject): 
 /**
 * Delete a project from the database.
 * @param {number} id - The id of the project to be deleted.
-* @returns {Promise<boolean>} - A Promise that resolves with a boolean indicating whether the project was deleted or not, or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue deleting the project from the database.
+* @returns {Promise<boolean>}
+* @throws {Error}
 */
-export const destroyProject = async (id: number): Promise<boolean> => {
+export const deleteProjectById = async (id: number): Promise<boolean> => {
     try {
       const connection = await createDBConnection();
-      const [result] = await connection.query<OkPacket>('DELETE FROM projet WHERE id_project = ?', [id]);
+      const [result] = await connection.query<OkPacket>('DELETE FROM project WHERE id_project = ?', [id]);
       connection.release();
       return result.affectedRows !== 0;
     } catch (error) {

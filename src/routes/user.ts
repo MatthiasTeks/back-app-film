@@ -1,18 +1,16 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import {findAdminByMail, hashingOptions, verifyAdminPassword} from "../models/auth";
+import {getUserByMail, hashingOptions, verifyAdminPassword} from "../models/user";
 import argon2 from "argon2";
-import {Admin} from "../interface/Interface";
 import {createDBConnection} from "../config/database";
 
-const authRouter = express.Router();
+const userRouter = express.Router();
 
 /**
  * Retrieves the token from the request's authorization header or query parameter.
- * @function
- * @param {Request} req - The request object.
- * @returns {string | null} - Returns the token as a string if found, or null if not found.
+ * @param {Request} req
+ * @returns {string | null}
  */
 const getToken = (req: Request): string | null => {
     if (
@@ -28,15 +26,14 @@ const getToken = (req: Request): string | null => {
 
 /**
  * Handles the login process for an admin user.
- * Verifies the user's email and password, then generates and sends a JWT token.
- * @route {POST} /login
- * @param {Request} req - The request object, containing the email and password in the request body.
- * @param {Response} res - The response object, used to send status and token back to the client.
+ * Verifies the user's email, password and if it has admin rules, then generates and sends a JWT token.
+ * @param {Request} req
+ * @param {Response} res
  */
-authRouter.post("/login", async (req: Request, res: Response) => {
+userRouter.post("/login", async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
-        const admin = await findAdminByMail(email);
+        const { email, password, is_admin } = req.body;
+        const admin = await getUserByMail(email);
 
         if (!admin) {
             return res.status(401).send("Invalid credentials");
@@ -45,6 +42,10 @@ authRouter.post("/login", async (req: Request, res: Response) => {
         const passwordIsCorrect = await verifyAdminPassword(password, admin.password);
         if (!passwordIsCorrect) {
             return res.status(401).send("Invalid credentials");
+        }
+
+        if(is_admin !== 1){
+            return res.status(401).send("User dont have admin permission")
         }
 
         const tokenUserInfo = {
@@ -63,35 +64,35 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     }
 });
 
-authRouter.post("/admin", async (req: Request, res: Response) => {
+userRouter.post("/sign-up", async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
+        const { email, password} = req.body;
 
-        // Hash the admin's password
+        // modify this line if you want to create new admin
+        const isAdmin = 0;
+
         const hashedPassword = await argon2.hash(password, hashingOptions);
 
-        const sql = 'INSERT INTO admin (mail, password) VALUES (?, ?)'
+        const sql = 'INSERT INTO user (mail, password, is_admin) VALUES (?, ?, ?)'
 
         // Insert the new admin into the database
         const connection = await createDBConnection();
-        const result = await connection.query(sql, [email, hashedPassword]);
+        await connection.query(sql, [email, hashedPassword, isAdmin]);
         connection.release();
 
-        // Return a success response
-        res.status(200).send({ message: "Admin created successfully" });
+        res.status(200).send({ message: "User created successfully" });
     } catch (error) {
         console.error(error);
-        res.status(500).send("Error creating admin");
+        res.status(500).send("Error creating user");
     }
 });
 
 /**
  * Verifies if the token provided in the request is valid, granting or denying access to a protected resource.
- * @route {POST} /protected
- * @param {Request} req - The request object, containing the token either in the authorization header or as a query parameter.
- * @param {Response} res - The response object, used to send the access status back to the client.
+ * @param {Request} req
+ * @param {Response} res
  */
-authRouter.post('/protected', (req: Request, res: Response) => {
+userRouter.post('/protected', (req: Request, res: Response) => {
     const token = getToken(req)
     jwt.verify(token as string, process.env.JWT_SECRET as string, (err) => {
         if (err) {
@@ -103,4 +104,4 @@ authRouter.post('/protected', (req: Request, res: Response) => {
 });
 
 
-export default authRouter
+export default userRouter

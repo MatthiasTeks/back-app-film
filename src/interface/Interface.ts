@@ -10,6 +10,7 @@ export interface Project {
     s3_image_horizontal_key: string;
     s3_video_projet_key: string;
     date: string;
+    is_highlight: number
 }
 
 export type PartialProject = {
@@ -23,32 +24,28 @@ export interface Newsletter {
 }
 
 export interface Admin {
-    id_admin?: number;
+    id_user?: number;
     mail: string;
     password: string;
+    is_admin: number;
 }
 
-export interface HomeActor {
-    id_home_actor?: number;
-    projet_id: number;
-}
-
-export interface HomeMedia {
-    id_home_media?: number;
+export interface Background {
+    id_background?: number;
     s3_video_key: string;
 }
 
-export interface HomeNews {
-    id_news?: number;
+export interface Feed {
+    id_feed?: number;
     name: string;
     resume: string;
     date: number;
+    is_link: number;
+    link?: string;
     s3_image_key: string;
-    isInsta: number;
-    linkInsta?: string;
 }
 
-export interface HomePartner {
+export interface Partner {
     id_partner: number;
     name: string;
     s3_image_key: string;

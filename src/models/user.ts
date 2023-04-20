@@ -1,4 +1,4 @@
-import {Connection, RowDataPacket} from "mysql2";
+import {RowDataPacket} from "mysql2";
 import argon2 from 'argon2';
 
 import { createDBConnection } from "../config/database";
@@ -22,22 +22,23 @@ export const hashingOptions: HashingOptions = {
 };
 
 /**
- * Finds an admin user by their email address.
+ * Finds user by his email address.
  * @param {string} mail - The email address of the admin user to find.
- * @returns {Promise<Admin | undefined>} A promise that resolves to an Admin object or undefined if no admin is found.
- * @throws {Error} Will throw an error if there is an issue with the database query.
+ * @returns {Promise<Admin | undefined>}
+ * @throws {Error}
  */
-export const findAdminByMail = async (mail: string): Promise<Admin | undefined> => {
+export const getUserByMail = async (mail: string): Promise<Admin | undefined> => {
     try {
         const connection = await createDBConnection();
-        const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM admin WHERE mail = ?', [mail]);
+        const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM user WHERE mail = ?', [mail]);
         connection.release();
         if (result.length === 0) {
             return undefined;
         }
         return {
             mail: result[0].mail,
-            password: result[0].password
+            password: result[0].password,
+            is_admin: result[0].is_admin
         };
     } catch (error) {
         console.error('Erreur lors de la requête: ', error);
@@ -57,10 +58,7 @@ export const verifyAdminPassword = async (plainPassword: string, hashedPassword:
         throw new Error('Invalid hashed password');
     }
 
-    console.log('verify', plainPassword, hashedPassword)
-
     try {
-        console.log(argon2.verify(hashedPassword, plainPassword, hashingOptions))
         return await argon2.verify(hashedPassword, plainPassword, hashingOptions);
     } catch (error) {
         console.error('Erreur lors de la vérification du mot de passe: ', error);

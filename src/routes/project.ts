@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import multer from "multer";
 import { config } from "../config";
-import { S3, GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "../services/UploadToS3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { uploadFileToS3 } from "../services/UploadToS3";
@@ -9,17 +9,16 @@ import { sendResponse } from "../services/SendResponse";
 
 import {
     validateProject,
-    findProjectByLabel,
-    findPageProjectOnType,
-    findProjectByGender,
-    findAllProject,
+    getProjectByGender,
+    getProjectById,
+    getProjectByLabel,
+    getAllProject,
+    getProjectHighlighted,
+    getProjectPageByType,
     createProject,
-    findProjectById,
-    updateProject,
-    destroyProject,
+    updateProjectById,
+    deleteProjectById
 } from "../models/project";
-
-
 
 const projectRouter = express.Router();
 
@@ -29,14 +28,14 @@ const upload = multer({ storage })
 
 /**
 * Gets all project records.
-* @param {Request} req - The HTTP request object.
-* @param {Response} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @param {Request} req
+* @param {Response} res
+* @returns {Promise<void>}
+* @throws {Error}
 */
 projectRouter.get('/', async (req: Request, res: Response) => {
     try {
-        const project = await findAllProject();
+        const project = await getAllProject();
         console.log(project)
         sendResponse(res, project, 'project not found');
     } catch (err) {
@@ -45,11 +44,27 @@ projectRouter.get('/', async (req: Request, res: Response) => {
 });
 
 /**
+ * Retrieve project highlighted from home page.
+ * @param {Request} req
+ * @param {Response} res.
+ * @returns {Promise<void>}
+ * @throws {Error}
+ */
+projectRouter.get('/highlight', async (req: Request, res: Response) => {
+    try {
+        const project = await getProjectHighlighted();
+        sendResponse(res, project, 'project not found');
+    } catch (err) {
+        res.status(500).json({ message: 'Error retrieving projects highlighted from database', error: err });
+    }
+});
+
+/**
 * Creates a new project record with the provided data and upload files images and video to S3 Bucket.
-* @param {Object} req - The HTTP request object.
-* @param {Object} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with the created project record or rejects with an error.
-* @throws {Error} - Throws an error if the provided data is invalid or if a project with the same name already exists.
+* @param {Object} req
+* @param {Object} res
+* @returns {Promise<void>}
+* @throws {Error}
 */
 projectRouter.post('/create', upload.fields([
     { name: 's3_image_main' },
@@ -64,7 +79,7 @@ projectRouter.post('/create', upload.fields([
             res.status(422).json({ validation: validationResult.error });
         } else {
             const lowercaseLabel = req.body.label.toLowerCase();
-            const projectExist = await findProjectByLabel(lowercaseLabel);
+            const projectExist = await getProjectByLabel(lowercaseLabel);
             if (projectExist) {
                 res.status(409).json({ message: "Project with the same name already exists" });
             } else {
@@ -100,16 +115,16 @@ projectRouter.post('/create', upload.fields([
 
 /**
 * Get page of project records based on the specified page number and project type.
-* @param {Object} req - The HTTP request object.
-* @param {Object} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with a page of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @param {Object} req
+* @param {Object} res
+* @returns {Promise<void>}
+* @throws {Error}
 */
 projectRouter.get('/page', async (req: Request, res: Response): Promise<void> => {
     try {
         const page = parseInt(req.query.page as string, 10);
         const type = req.query.type as string;
-        const project = await findPageProjectOnType(page, type)
+        const project = await getProjectPageByType(page, type)
         sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err })
@@ -118,15 +133,15 @@ projectRouter.get('/page', async (req: Request, res: Response): Promise<void> =>
 
 /**
 * Get all project records with the specified gender.
-* @param {Object} req - The HTTP request object.
-* @param {Object} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with an array of project records or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project records.
+* @param {Object} req
+* @param {Object} res
+* @returns {Promise<void>}
+* @throws {Error}
 */
 projectRouter.get('/gender/:gender', async (req: Request, res: Response): Promise<void> => {
     try {
         const gender = req.params.gender as string;
-        const project = await findProjectByGender(gender)
+        const project = await getProjectByGender(gender)
         sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err })
@@ -135,15 +150,15 @@ projectRouter.get('/gender/:gender', async (req: Request, res: Response): Promis
 
 /**
 * Get a project record by label.
-* @param {Object} req - The HTTP request object.
-* @param {Object} res - The HTTP response object.
-* @returns {Promise<void>} - A Promise that resolves with the project record or rejects with an error.
-* @throws {Error} - Throws an error if there was an issue retrieving the project record.
+* @param {Object} req
+* @param {Object} res
+* @returns {Promise<void>}
+* @throws {Error}
 */
 projectRouter.get('/label/:label', async (req: Request, res: Response): Promise<void> => {
     try {
         const name = req.params.label as string;
-        const project = await findProjectByLabel(name)
+        const project = await getProjectByLabel(name)
         sendResponse(res, project, 'project not found');
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err })
@@ -152,10 +167,10 @@ projectRouter.get('/label/:label', async (req: Request, res: Response): Promise<
 
 /**
  * Update project record by id.
- * @param {Object} req - The HTTP request object.
- * @param {Object} res - The HTTP response object.
- * @returns {Promise<void>} - A Promise that resolves with the project record or rejects with an error.
- * @throws {Error} - Throws an error if there was an issue retrieving the project record.
+ * @param {Object} req
+ * @param {Object} res
+ * @returns {Promise<void>}
+ * @throws {Error}
  */
 projectRouter.put('/update/:id', async (req: Request, res: Response): Promise<void> => {
     try {
@@ -165,12 +180,12 @@ projectRouter.put('/update/:id', async (req: Request, res: Response): Promise<vo
         if (projectValidate.error) {
             res.status(422).json({ validation: projectValidate.error });
         } else {
-            const project = await findProjectById(id);
+            const project = await getProjectById(id);
             if (!project) {
                 res.status(404).json({ message: 'Project not found' });
             } else {
-                await updateProject(id, newAttributes);
-                const updatedProject = await findProjectById(id);
+                await updateProjectById(id, newAttributes);
+                const updatedProject = await getProjectById(id);
                 res.status(200).json(updatedProject);
             }
         }
@@ -181,19 +196,19 @@ projectRouter.put('/update/:id', async (req: Request, res: Response): Promise<vo
 
 /**
  * Delete project record by id.
- * @param {Object} req - The HTTP request object.
- * @param {Object} res - The HTTP response object.
- * @returns {Promise<void>} - A Promise that resolves with the project record or rejects with an error.
- * @throws {Error} - Throws an error if there was an issue retrieving the project record.
+ * @param {Object} req
+ * @param {Object} res
+ * @returns {Promise<void>}
+ * @throws {Error}
  */
 projectRouter.delete('/delete/:id', async (req: Request, res: Response): Promise<void> => {
     try {
         const id = parseInt(req.params.id as string, 10);
-        const project = await findProjectById(id);
+        const project = await getProjectById(id);
         if (!project) {
             res.status(404).json({ message: 'Project not found' });
         } else {
-            const result = await destroyProject(id);
+            const result = await deleteProjectById(id);
             if (result) {
                 res.status(204).send();
             } else {
@@ -208,10 +223,10 @@ projectRouter.delete('/delete/:id', async (req: Request, res: Response): Promise
 
 /**
  * Get a signed URL for a video associated with a project.
- * @param {Object} req - The HTTP request object.
- * @param {Object} res - The HTTP response object.
- * @returns {Promise<void>} - A Promise that resolves with the signed URL or rejects with an error.
- * @throws {Error} - Throws an error if there was an issue retrieving the project or generating the signed URL.
+ * @param {Object} req
+ * @param {Object} res
+ * @returns {Promise<void>}
+ * @throws {Error}
  */
 projectRouter.get('/:key/sign-url', async (req: Request, res: Response): Promise<void> => {
     try {
