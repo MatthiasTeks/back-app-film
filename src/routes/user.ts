@@ -32,8 +32,10 @@ const getToken = (req: Request): string | null => {
  */
 userRouter.post("/login", async (req: Request, res: Response) => {
     try {
-        const { email, password, is_admin } = req.body;
+        const { email, password } = req.body;
+        console.log('start', email, password)
         const admin = await getUserByMail(email);
+        console.log('admin', admin)
 
         if (!admin) {
             return res.status(401).send("Invalid credentials");
@@ -44,7 +46,7 @@ userRouter.post("/login", async (req: Request, res: Response) => {
             return res.status(401).send("Invalid credentials");
         }
 
-        if(is_admin !== 1){
+        if(admin.is_admin !== 1){
             return res.status(401).send("User dont have admin permission")
         }
 

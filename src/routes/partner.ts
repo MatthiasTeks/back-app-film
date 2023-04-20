@@ -12,7 +12,7 @@ const partnerRouter = express.Router();
  * @returns {Promise<void>}
  * @throws {Error}
  */
-partnerRouter.get('/partner', async (req: Request, res: Response) => {
+partnerRouter.get('/', async (req: Request, res: Response) => {
     try {
         const partner = await getAllPartner();
         sendResponse(res, partner, 'partner not found');
@@ -28,7 +28,7 @@ partnerRouter.get('/partner', async (req: Request, res: Response) => {
  * @returns {Promise<void>}
  * @throws {Error}
  */
-partnerRouter.post('/partner/update', async (req: Request, res: Response) => {
+partnerRouter.post('/update', async (req: Request, res: Response) => {
     const { name, media, idPartner } = req.body;
     try {
         const partner = await updatePartnerById(name, media, idPartner);

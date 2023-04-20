@@ -3,6 +3,7 @@ import multer from "multer";
 
 import { sendResponse } from "../services/SendResponse";
 import { getBackground, updateBackground } from "../models/background";
+import { signUrl } from "../services/SignUrl";
 
 const backgroundRouter = express.Router();
 
@@ -20,7 +21,13 @@ const upload = multer({ storage })
 backgroundRouter.get('/', async (req: Request, res: Response) => {
     try {
         const background = await getBackground();
-        sendResponse(res, background, 'background not found');
+        console.log('before', background);
+        if(background){
+            console.log('in')
+            const signedUrl = await signUrl(background[0].s3_video_key)
+            console.log('signed', signedUrl)
+            sendResponse(res, signedUrl, 'background not found');
+        }
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving background from database', error: err });
     }
@@ -36,6 +43,7 @@ backgroundRouter.get('/', async (req: Request, res: Response) => {
 backgroundRouter.post('/update', upload.single('file'), async (req: Request, res: Response) => {
     try {
         const file = req.file;
+        console.log(file);
         if(file){
             const background = await updateBackground(file);
             sendResponse(res, background, 'background not updated');

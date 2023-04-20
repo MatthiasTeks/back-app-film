@@ -221,37 +221,4 @@ projectRouter.delete('/delete/:id', async (req: Request, res: Response): Promise
     }
 });
 
-/**
- * Get a signed URL for a video associated with a project.
- * @param {Object} req
- * @param {Object} res
- * @returns {Promise<void>}
- * @throws {Error}
- */
-projectRouter.get('/:key/sign-url', async (req: Request, res: Response): Promise<void> => {
-    try {
-        const key = req.params.key as string;
-
-        const params = {
-            Bucket: config.bucket_name,
-            Key: key,
-            Expires: 60 * 60,
-        };
-
-        try {
-            await s3.headObject(params);
-
-            const command = new GetObjectCommand(params);
-            const signedUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-            console.log(signedUrl);
-            res.status(200).json({ signedUrl });
-        } catch (err) {
-            res.status(404).json({ message: 'Error retrieving this file name on our bucket', error: err });
-        }
-    } catch (err) {
-        res.status(500).json({ message: 'Error retrieving project from database', error: err });
-    }
-});
-
-
 export default projectRouter;
