@@ -45,3 +45,32 @@ export const uploadFileToS3 = async (file: Express.Multer.File): Promise<string>
     // Forwarding the file URL to S3
     return `https://${config.bucket_name}.s3.${config.aws_region}.amazonaws.com/${originalname}`;
 };
+
+export const uploadFilesToS3 = async (files: Express.Multer.File[]): Promise<string[]> => {
+    const urls: string[] = [];
+
+    for (const file of files) {
+        // Retrieving information from the file
+        const { originalname, mimetype, buffer } = file;
+
+        // Construction of the object to be sent to S3
+        const params = {
+            Bucket: config.bucket_name,
+            Key: originalname,
+            Body: buffer,
+            ContentType: mimetype,
+        };
+
+        // Sending the file to S3
+        await new Upload({
+            client: s3,
+            params,
+        }).done();
+
+        // Ajout de l'URL du fichier à la liste des URLs
+        urls.push(`https://${config.bucket_name}.s3.${config.aws_region}.amazonaws.com/${originalname}`);
+    }
+
+    // Forwarding the file array URL to S3
+    return urls;
+};

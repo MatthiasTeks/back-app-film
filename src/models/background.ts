@@ -33,8 +33,6 @@ export const updateBackground = async (file: Express.Multer.File): Promise<any> 
     try {
         const connection = await createDBConnection();
 
-        console.log(file);
-
         // Get the old video key
         const [oldVideoRows] = await connection.query<RowDataPacket[]>('SELECT s3_video_key FROM background WHERE id_background = 1');
         const oldVideoKey = oldVideoRows[0].s3_video_key;

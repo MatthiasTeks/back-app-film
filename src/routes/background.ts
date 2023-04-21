@@ -21,11 +21,8 @@ const upload = multer({ storage })
 backgroundRouter.get('/', async (req: Request, res: Response) => {
     try {
         const background = await getBackground();
-        console.log('before', background);
         if(background){
-            console.log('in')
             const signedUrl = await signUrl(background[0].s3_video_key)
-            console.log('signed', signedUrl)
             sendResponse(res, signedUrl, 'background not found');
         }
     } catch (err) {

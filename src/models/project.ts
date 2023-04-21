@@ -23,7 +23,8 @@ export const validateProject = (data: Project, forCreation: boolean = true): Val
         s3_image_3_key: Joi.string().max(255).presence(presence),
         s3_image_horizontal_key: Joi.string().max(255).presence(presence),
         s3_video_projet_key: Joi.string().max(255).presence(presence),
-        date: Joi.number().presence(presence)
+        date: Joi.string().presence(presence),
+        is_highlight: Joi.number().presence(presence)
     }).validate(data, { abortEarly: false });
 };
 
@@ -56,10 +57,13 @@ export const createProject = async (newAttributes: Project): Promise<Project> =>
     const sql = 'INSERT INTO project (name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
     try {
+        console.log('try model')
         const connection = await createDBConnection();
         const [result] = await connection.query<OkPacket>(sql, [name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight]);
         connection.release();
         const id_project = result.insertId;
+
+        console.log(result)
 
         return {id_project, name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight} as Project;
     } catch (error) {

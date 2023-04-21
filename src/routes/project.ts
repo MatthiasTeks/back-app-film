@@ -1,10 +1,6 @@
 import express, { Request, Response } from 'express';
 import multer from "multer";
-import { config } from "../config";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { s3 } from "../services/UploadToS3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { uploadFileToS3 } from "../services/UploadToS3";
+import { uploadFilesToS3} from "../services/UploadToS3";
 import { sendResponse } from "../services/SendResponse";
 
 import {
@@ -66,45 +62,29 @@ projectRouter.get('/highlight', async (req: Request, res: Response) => {
 * @returns {Promise<void>}
 * @throws {Error}
 */
-projectRouter.post('/create', upload.fields([
-    { name: 's3_image_main' },
-    { name: 's3_image_2' },
-    { name: 's3_image_3' },
-    { name: 's3_image_horizontal' },
-    { name: 's3_video_projet' },
-]), async (req: Request, res: Response): Promise<void> => {
+projectRouter.post('/create', async (req: Request, res: Response): Promise<void> => {
     try {
+        console.log(req.body)
         const validationResult = validateProject(req.body);
         if (validationResult.error) {
+            console.log('validationError')
             res.status(422).json({ validation: validationResult.error });
         } else {
+            console.log('validationGood')
             const lowercaseLabel = req.body.label.toLowerCase();
             const projectExist = await getProjectByLabel(lowercaseLabel);
             if (projectExist) {
+                console.log('projectExist')
                 res.status(409).json({ message: "Project with the same name already exists" });
             } else {
-                if (typeof req.files === 'object' && !Array.isArray(req.files)) {
-                    const fileKeys = await Promise.all(Object.values(req.files).map(async (fileArray) => {
-                        const file = fileArray[0] as Express.Multer.File;
-                        const fileUrl = await uploadFileToS3(file);
-                        return fileUrl.split('/').pop();
-                    }));
-
-                    const [s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key] = fileKeys;
-
-                    const projectData = {
-                        ...req.body,
-                        s3_image_main_key,
-                        s3_image_2_key,
-                        s3_image_3_key,
-                        s3_image_horizontal_key,
-                        s3_video_projet_key,
-                    };
-
-                    const createdProject = await createProject(projectData);
+                console.log('projectDontExist')
+                const createdProject = await createProject(req.body);
+                if(createdProject){
+                    console.log('created')
                     res.status(201).json(createdProject);
                 } else {
-                    res.status(400).json({ message: 'Invalid file data' });
+                    console.log('doesnt created')
+                    res.status(404).json({ message: "Erreur lors de la création du model" });
                 }
             }
         }
@@ -218,6 +198,22 @@ projectRouter.delete('/delete/:id', async (req: Request, res: Response): Promise
     } catch (error) {
         console.error('An error occurred while deleting the project: ', error);
         res.status(500).json({ message: 'An error occurred while deleting the project' });
+    }
+});
+
+// Route pour téléverser des fichiers à S3
+projectRouter.post('/upload-many', upload.array('files'), async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!Array.isArray(req.files)) {
+            res.status(400).json({ success: false, error: 'Invalid files' });
+            return;
+        }
+
+        const urls = await uploadFilesToS3(req.files);
+
+        res.json({ success: true, urls });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error });
     }
 });
 
