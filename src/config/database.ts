@@ -1,11 +1,17 @@
 import { dbConfig } from "./db";
-import { createPool, PoolConnection } from "mysql2/promise";
+import { createPool, Pool } from "mysql2/promise";
 
-async function createDBConnection(): Promise<PoolConnection> {
-    const pool = createPool(dbConfig);
+let pool: Pool;
+
+async function createDBConnection(): Promise<void> {
+    pool = createPool(dbConfig);
+}
+
+async function getDBConnection() {
     return pool.getConnection();
 }
 
 export {
     createDBConnection,
+    getDBConnection
 };

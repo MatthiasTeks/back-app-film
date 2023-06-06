@@ -1,7 +1,7 @@
 import { OkPacket, RowDataPacket } from "mysql2";
 
 import { Feed } from "../interface/Interface";
-import { createDBConnection } from "../config/database";
+import { getDBConnection } from "../config/database";
 
 /**
  * Return all feed from home page
@@ -10,7 +10,7 @@ import { createDBConnection } from "../config/database";
  */
 export const getAllFeed = async (): Promise<Feed[]> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM feed');
         connection.release();
         return result as Feed[];
@@ -27,7 +27,7 @@ export const getAllFeed = async (): Promise<Feed[]> => {
  */
 export const updateFeedById = async (news: Feed): Promise<Feed | null> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         await connection.query<OkPacket>('UPDATE feed SET name = ?, resume = ?, date = ?, s3_image_key = ?, is_link = ?, link = ? WHERE id_feed = ?', [news.name, news.resume, news.date, news.s3_image_key, news.is_link, news.link, news.id_feed]);
 
         const [updatedNewsResult] = await connection.query<RowDataPacket[]>('SELECT * FROM feed WHERE id_feed = ?', [news.id_feed]);

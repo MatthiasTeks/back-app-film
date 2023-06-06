@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 import {getUserByMail, hashingOptions, verifyAdminPassword} from "../models/user";
 import argon2 from "argon2";
-import {createDBConnection} from "../config/database";
+import { getDBConnection } from "../config/database";
 
 const userRouter = express.Router();
 
@@ -78,7 +78,7 @@ userRouter.post("/sign-up", async (req: Request, res: Response) => {
         const sql = 'INSERT INTO user (mail, password, is_admin) VALUES (?, ?, ?)'
 
         // Insert the new admin into the database
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         await connection.query(sql, [email, hashedPassword, isAdmin]);
         connection.release();
 

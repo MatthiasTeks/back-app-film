@@ -1,7 +1,7 @@
 import {RowDataPacket} from "mysql2";
 import argon2 from 'argon2';
 
-import { createDBConnection } from "../config/database";
+import { getDBConnection } from "../config/database";
 
 import { Admin } from "../interface/Interface";
 
@@ -29,7 +29,7 @@ export const hashingOptions: HashingOptions = {
  */
 export const getUserByMail = async (mail: string): Promise<Admin | undefined> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM user WHERE mail = ?', [mail]);
         connection.release();
         if (result.length === 0) {

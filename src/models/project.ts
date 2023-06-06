@@ -1,7 +1,7 @@
 import Joi, { ValidationResult } from 'joi';
 import { OkPacket, RowDataPacket } from "mysql2";
 
-import { createDBConnection } from "../config/database";
+import { getDBConnection } from "../config/database";
 import {PartialProject, Project} from '../interface/Interface';
 
 /**
@@ -35,7 +35,7 @@ export const validateProject = (data: Project, forCreation: boolean = true): Val
  */
 export const getAllProject = async (): Promise<Project[]> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query('SELECT * FROM project');
         connection.release();
         return result as Project[];
@@ -58,7 +58,7 @@ export const createProject = async (newAttributes: Project): Promise<Project> =>
 
     try {
         console.log('try model')
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query<OkPacket>(sql, [name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight]);
         connection.release();
         const id_project = result.insertId;
@@ -79,7 +79,7 @@ export const createProject = async (newAttributes: Project): Promise<Project> =>
  */
 export const getProjectHighlighted = async (): Promise<Project[]> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project WHERE is_highlight = 1');
         connection.release();
         return result as Project[];
@@ -103,7 +103,7 @@ export const getProjectPageByType = async (page: number, type: string): Promise<
     const values = [type, offset, limit];
   
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query(sql, values);
         connection.release();
         return result as Project[];
@@ -122,7 +122,7 @@ export const getProjectPageByType = async (page: number, type: string): Promise<
 export const getProjectByGender = async (gender: string): Promise<Project[]> => {
     const sql = 'SELECT * FROM project WHERE gender = ?';
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query(sql, [gender]);
         connection.release();
         return result as Project[];
@@ -142,7 +142,7 @@ export const getProjectByLabel = async (label: string): Promise<Project | null> 
     const sql = 'SELECT * FROM project WHERE label = ?';
   
     try {
-      const connection = await createDBConnection();
+      const connection = await getDBConnection();
       const [result] = await connection.query<RowDataPacket[]>(sql, [label]);
       connection.release();
         if (result.length > 0) {
@@ -166,7 +166,7 @@ export const getProjectById = async (id: number): Promise<Project | null> => {
     const sql = 'SELECT * FROM project WHERE id_project = ?';
 
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query<RowDataPacket[]>(sql, [id]);
         connection.release();
         if (result.length > 0) {
@@ -188,7 +188,7 @@ export const getProjectById = async (id: number): Promise<Project | null> => {
 */
 export const updateProjectById = async (id: number, newAttributes: PartialProject): Promise<void> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
 
         const setClause = Object.keys(newAttributes)
             .map((key) => `${key} = ?`)
@@ -214,7 +214,7 @@ export const updateProjectById = async (id: number, newAttributes: PartialProjec
 */
 export const deleteProjectById = async (id: number): Promise<boolean> => {
     try {
-      const connection = await createDBConnection();
+      const connection = await getDBConnection();
       const [result] = await connection.query<OkPacket>('DELETE FROM project WHERE id_project = ?', [id]);
       connection.release();
       return result.affectedRows !== 0;

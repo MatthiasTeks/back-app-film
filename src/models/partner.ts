@@ -1,7 +1,7 @@
 import { RowDataPacket } from "mysql2";
 
 import { Partner } from "../interface/Interface";
-import { createDBConnection } from "../config/database";
+import { getDBConnection } from "../config/database";
 
 
 /**
@@ -11,7 +11,7 @@ import { createDBConnection } from "../config/database";
  */
 export const getAllPartner = async (): Promise<Partner[]> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM partner');
         connection.release();
         return result as Partner[];
@@ -28,7 +28,7 @@ export const getAllPartner = async (): Promise<Partner[]> => {
  */
 export const updatePartnerById = async (name: string, s3_image_key: string, idPartner: number): Promise<Partner | null> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         await connection.query('UPDATE partner SET name = ?, s3_image_key = ? WHERE id_partner = ?', [name, s3_image_key, idPartner]);
 
         const [updatedPartnerResult] = await connection.query<RowDataPacket[]>('SELECT * FROM partner WHERE id_partner = ?', [idPartner]);

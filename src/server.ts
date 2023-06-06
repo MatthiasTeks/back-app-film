@@ -6,13 +6,8 @@ import { setupRoutes } from './routes';
 import { corsMiddleware } from './middlewares/cors';
 
 import dotenv, { DotenvConfigOptions } from 'dotenv';
-import {config} from "./config";
-import {s3} from "./services/UploadToS3";
-import {GetObjectCommand} from "@aws-sdk/client-s3";
-import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
-import projectRouter from "./routes/project";
-import {sign} from "jsonwebtoken";
 import {signUrl} from "./services/SignUrl";
+import {createDBConnection} from "./config/database";
 dotenv.config(<DotenvConfigOptions>{ silent: true });
 
 // SETUP
@@ -90,6 +85,16 @@ app.get('/', (req: Request, res: Response) => {
   `);
 });
 
-app.listen(port, () =>  {
-  console.log(`Server listening on http://localhost:${port}`);
-});
+(async () => {
+    try {
+        await createDBConnection();
+        console.log('Database connection successfully established');
+
+        app.listen(port, () =>  {
+            console.log(`Server listening on http://localhost:${port}`);
+        });
+    } catch (err) {
+        console.error('Failed to establish database connection', err);
+        process.exit(1);
+    }
+})();

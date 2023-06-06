@@ -1,7 +1,7 @@
 import { OkPacket, RowDataPacket } from "mysql2";
 
 import { Background } from "../interface/Interface";
-import { createDBConnection } from "../config/database";
+import { getDBConnection } from "../config/database";
 import { deleteFileFromS3, uploadFileToS3 } from "../services/UploadToS3";
 
 /**
@@ -11,7 +11,7 @@ import { deleteFileFromS3, uploadFileToS3 } from "../services/UploadToS3";
  */
 export const getBackground = async (): Promise<Background[]> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM background');
         connection.release();
         return result.map(row => ({
@@ -31,7 +31,7 @@ export const getBackground = async (): Promise<Background[]> => {
  */
 export const updateBackground = async (file: Express.Multer.File): Promise<any> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
 
         // Get the old video key
         const [oldVideoRows] = await connection.query<RowDataPacket[]>('SELECT s3_video_key FROM background WHERE id_background = 1');

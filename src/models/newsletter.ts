@@ -1,7 +1,7 @@
 import Joi, { ValidationError } from 'joi';
 import { RowDataPacket } from "mysql2";
 
-import { createDBConnection } from "../config/database";
+import { getDBConnection } from "../config/database";
 
 import { Newsletter } from "../interface/Interface";
 
@@ -27,7 +27,7 @@ export const validateNewsletter = (data: Newsletter, forCreation = true): Valida
 */
 export const getAllNewsletter = async (): Promise<Array<Newsletter>> => {
     try {
-        const connection = await createDBConnection();
+        const connection = await getDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM newsletter');
         connection.release();
         return result.map(row => ({
@@ -48,7 +48,7 @@ export const getAllNewsletter = async (): Promise<Array<Newsletter>> => {
 */
 export const getNewsletterByMail = async (mail: string): Promise<Newsletter | undefined> => {
     try {
-      const connection = await createDBConnection();
+      const connection = await getDBConnection();
       const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM newsletter WHERE mail = ?', [mail]);
       connection.release();
         if (result.length === 0) {
@@ -74,7 +74,7 @@ export const createNewsletter = async ({ mail, consent }: Newsletter): Promise<N
     const sql = 'INSERT INTO newsletter (mail, consent) VALUES (?, ?)';
   
     try {
-      const connection = await createDBConnection();
+      const connection = await getDBConnection();
       const [result]: any = await connection.query(sql, [mail, consent]);
       connection.release();
       const id_newsletter = result.insertId;
@@ -93,7 +93,7 @@ export const createNewsletter = async ({ mail, consent }: Newsletter): Promise<N
 */
 export const deleteNewsletterByMail = async (mail: string): Promise<boolean> => {
     try {
-      const connection = await createDBConnection();
+      const connection = await getDBConnection();
       const [result]: any = await connection.query('DELETE FROM newsletter WHERE mail = ?', [mail]);
       connection.release();
       return result.affectedRows !== 0;

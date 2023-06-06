@@ -15,6 +15,7 @@ import {
     updateProjectById,
     deleteProjectById
 } from "../models/project";
+import {SignProject} from "../helpers/SignProject";
 
 const projectRouter = express.Router();
 
@@ -31,10 +32,17 @@ const upload = multer({ storage })
 */
 projectRouter.get('/', async (req: Request, res: Response) => {
     try {
-        const project = await getAllProject();
-        console.log(project)
-        sendResponse(res, project, 'project not found');
+        const projects = await getAllProject();
+        if(projects){
+            const signedProjects = await Promise.all(projects.map(async (project) => {
+                return SignProject(project);
+            }));
+            sendResponse(res, signedProjects, 'project not found');
+        } else {
+            sendResponse(res, null, 'project not found');
+        }
     } catch (err) {
+        console.error('Error retrieving project from database:', err);
         res.status(500).json({ message: 'Error retrieving project from database', error: err });
     }
 });
@@ -48,8 +56,13 @@ projectRouter.get('/', async (req: Request, res: Response) => {
  */
 projectRouter.get('/highlight', async (req: Request, res: Response) => {
     try {
-        const project = await getProjectHighlighted();
-        sendResponse(res, project, 'project not found');
+        const projects = await getProjectHighlighted();
+        if(projects){
+            const signedProjects = await Promise.all(projects.map(async (project) => {
+                return SignProject(project);
+            }));
+            sendResponse(res, signedProjects, 'project not found');
+        }
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving projects highlighted from database', error: err });
     }
@@ -104,8 +117,13 @@ projectRouter.get('/page', async (req: Request, res: Response): Promise<void> =>
     try {
         const page = parseInt(req.query.page as string, 10);
         const type = req.query.type as string;
-        const project = await getProjectPageByType(page, type)
-        sendResponse(res, project, 'project not found');
+        const projects = await getProjectPageByType(page, type)
+        if(projects){
+            const signedProjects = await Promise.all(projects.map(async (project) => {
+                return SignProject(project);
+            }));
+            sendResponse(res, signedProjects, 'project not found');
+        }
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err })
     }
@@ -139,7 +157,10 @@ projectRouter.get('/label/:label', async (req: Request, res: Response): Promise<
     try {
         const name = req.params.label as string;
         const project = await getProjectByLabel(name)
-        sendResponse(res, project, 'project not found');
+        if(project){
+            const signedProject = await SignProject(project);
+            sendResponse(res, signedProject, 'project not found');
+        }
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project from database', error: err })
     }
