@@ -16,14 +16,13 @@ export const validateProject = (data: Project, forCreation: boolean = true): Val
         id_projet: Joi.number(),
         name: Joi.string().max(255).presence(presence),
         label: Joi.string().max(255).presence(presence),
-        gender: Joi.string().max(45).presence(presence),
-        type_projet: Joi.string().max(255).presence(presence),
-        s3_image_main_key: Joi.string().max(255).presence(presence),
-        s3_image_2_key: Joi.string().max(255).presence(presence),
-        s3_image_3_key: Joi.string().max(255).presence(presence),
-        s3_image_horizontal_key: Joi.string().max(255).presence(presence),
-        s3_video_projet_key: Joi.string().max(255).presence(presence),
+        type: Joi.string().max(255).presence(presence),
+        journey: Joi.string().max(255).presence(presence),
+        s3_minia_key: Joi.string().max(255).presence(presence),
+        s3_video_key: Joi.string().max(255).presence(presence),
         date: Joi.string().presence(presence),
+        place: Joi.string().max(255).presence(presence),
+        credit: Joi.string().max(255).presence(presence),
         is_highlight: Joi.number().presence(presence)
     }).validate(data, { abortEarly: false });
 };
@@ -52,20 +51,20 @@ export const getAllProject = async (): Promise<Project[]> => {
  * @throws {Error} - Throws an error if there was an issue inserting the project.
  */
 export const createProject = async (newAttributes: Project): Promise<Project> => {
-    const {name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight} = newAttributes;
+    const {name, label, type, journey, s3_minia_key, s3_video_key, date, place, credit, is_highlight} = newAttributes;
 
     const sql = 'INSERT INTO project (name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
     try {
         console.log('try model')
         const connection = await getDBConnection();
-        const [result] = await connection.query<OkPacket>(sql, [name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight]);
+        const [result] = await connection.query<OkPacket>(sql, [name, label, type, journey, s3_minia_key, s3_video_key, date, place, credit, is_highlight]);
         connection.release();
         const id_project = result.insertId;
 
         console.log(result)
 
-        return {id_project, name, label, gender, type_projet, s3_image_main_key, s3_image_2_key, s3_image_3_key, s3_image_horizontal_key, s3_video_projet_key, date, is_highlight} as Project;
+        return {name, label, type, journey, s3_minia_key, s3_video_key, date, place, credit, is_highlight} as Project;
     } catch (error) {
         console.error('Erreur lors de la requête: ', error);
         throw error;
@@ -105,25 +104,6 @@ export const getProjectPageByType = async (page: number, type: string): Promise<
     try {
         const connection = await getDBConnection();
         const [result] = await connection.query(sql, values);
-        connection.release();
-        return result as Project[];
-    } catch (error) {
-        console.error('Erreur lors de la requête: ', error);
-        throw error;
-    }
-};
-
-/**
-* Retrieves all the projects from the database that match a specific gender.
-* @param {string} gender - The gender to match.
-* @returns {Promise<Project[]>}
-* @throws {Error}
-*/
-export const getProjectByGender = async (gender: string): Promise<Project[]> => {
-    const sql = 'SELECT * FROM project WHERE gender = ?';
-    try {
-        const connection = await getDBConnection();
-        const [result] = await connection.query(sql, [gender]);
         connection.release();
         return result as Project[];
     } catch (error) {

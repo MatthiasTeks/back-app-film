@@ -2,6 +2,7 @@ import { OkPacket, RowDataPacket } from "mysql2";
 
 import { Feed } from "../interface/Interface";
 import { getDBConnection } from "../config/database";
+import { deleteFileFromS3, uploadFileToS3 } from "../services/UploadToS3";
 
 /**
  * Return all feed from home page
@@ -25,16 +26,22 @@ export const getAllFeed = async (): Promise<Feed[]> => {
  * @returns {Promise<Feed[]>}
  * @throws {Error}.
  */
-export const updateFeedById = async (news: Feed): Promise<Feed | null> => {
+export const updateFeedById = async (news: Feed, file: Express.Multer.File): Promise<Feed | null> => {
     try {
         const connection = await getDBConnection();
-        await connection.query<OkPacket>('UPDATE feed SET name = ?, resume = ?, date = ?, s3_image_key = ?, is_link = ?, link = ? WHERE id_feed = ?', [news.name, news.resume, news.date, news.s3_image_key, news.is_link, news.link, news.id_feed]);
 
-        const [updatedNewsResult] = await connection.query<RowDataPacket[]>('SELECT * FROM feed WHERE id_feed = ?', [news.id_feed]);
-        connection.release();
+        // retrieve old feed key 
+        const [oldFeed] = await connection.query<RowDataPacket[]>('SELECT * FROM feed WHERE id_feed = ?', [news.id_feed]);
+        const oldFeedKey = oldFeed[0].s3_image_key;
 
-        if (updatedNewsResult.length > 0) {
-            return updatedNewsResult[0] as Feed;
+        // update feed id
+        await connection.query<OkPacket>('UPDATE feed SET name = ?, resume = ?, date = ?, s3_image_key = ?, is_instagram = ?, is_facebook = ?, link_instagram = ?, link_facebook = ?, WHERE id_feed = ?', [news.name, news.resume, news.date, file.originalname, news.is_instagram, news.is_facebook, news.link_instagram, news.link_facebook, news.id_feed]);
+        const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM feed WHERE id_feed = ?', [news.id_feed]);
+
+        if (result.length > 0) {
+            await uploadFileToS3(file);
+            await deleteFileFromS3(oldFeedKey);
+            return result[0] as Feed;
         } else {
             return null
         }

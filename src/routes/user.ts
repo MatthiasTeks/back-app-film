@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
-import {getUserByMail, hashingOptions, verifyAdminPassword} from "../models/user";
+import {getUserByMail, hashingOptions, verifyUserPassword} from "../models/user";
 import argon2 from "argon2";
 import { getDBConnection } from "../config/database";
 
@@ -33,15 +33,13 @@ const getToken = (req: Request): string | null => {
 userRouter.post("/login", async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
-        console.log('start', email, password)
         const admin = await getUserByMail(email);
-        console.log('admin', admin)
 
         if (!admin) {
             return res.status(401).send("Invalid credentials");
         }
 
-        const passwordIsCorrect = await verifyAdminPassword(password, admin.password);
+        const passwordIsCorrect = await verifyUserPassword(password, admin.password);
         if (!passwordIsCorrect) {
             return res.status(401).send("Invalid credentials");
         }

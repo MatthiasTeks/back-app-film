@@ -1,8 +1,9 @@
-import {config} from "../config";
-import {s3} from "./UploadToS3";
-import {GetObjectCommand} from "@aws-sdk/client-s3";
-import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
+import { config } from "../config";
+import { s3 } from "./UploadToS3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+// Sign url to get media files from S3 AWS Bucket
 export const signUrl = async (key: string) => {
     const params = {
         Bucket: config.bucket_name,

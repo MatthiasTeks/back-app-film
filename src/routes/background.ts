@@ -13,10 +13,6 @@ const upload = multer({ storage })
 
 /**
 * Retrieve background video from home page.
-* @param {Request} req
-* @param {Response} res
-* @returns {Promise<void>}
-* @throws {Error}
 */
 backgroundRouter.get('/', async (req: Request, res: Response) => {
     try {
@@ -32,15 +28,10 @@ backgroundRouter.get('/', async (req: Request, res: Response) => {
 
 /**
  * Update background video from home page
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
- * @throws {Error}
  */
 backgroundRouter.post('/update', upload.single('file'), async (req: Request, res: Response) => {
     try {
         const file = req.file;
-        console.log(file);
         if(file){
             const background = await updateBackground(file);
             sendResponse(res, background, 'background not updated');

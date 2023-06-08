@@ -3,7 +3,7 @@ import argon2 from 'argon2';
 
 import { getDBConnection } from "../config/database";
 
-import { Admin } from "../interface/Interface";
+import { User } from "../interface/Interface";
 
 interface HashingOptions {
     type: 0 | 1 | 2;
@@ -27,7 +27,7 @@ export const hashingOptions: HashingOptions = {
  * @returns {Promise<Admin | undefined>}
  * @throws {Error}
  */
-export const getUserByMail = async (mail: string): Promise<Admin | undefined> => {
+export const getUserByMail = async (mail: string): Promise<User | undefined> => {
     try {
         const connection = await getDBConnection();
         const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM user WHERE mail = ?', [mail]);
@@ -53,7 +53,7 @@ export const getUserByMail = async (mail: string): Promise<Admin | undefined> =>
  * @returns {Promise<boolean>} - A promise that resolves to true if the plain password matches the hashed password, or false otherwise.
  * @throws {Error} - If there's an error during the verification process, the error will be logged and thrown.
  */
-export const verifyAdminPassword = async (plainPassword: string, hashedPassword: string): Promise<boolean> => {
+export const verifyUserPassword = async (plainPassword: string, hashedPassword: string): Promise<boolean> => {
     if (!hashedPassword) {
         throw new Error('Invalid hashed password');
     }

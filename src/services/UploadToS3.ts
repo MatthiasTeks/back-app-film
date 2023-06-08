@@ -1,6 +1,5 @@
 import { Upload } from "@aws-sdk/lib-storage";
 import { S3, S3ClientConfig } from "@aws-sdk/client-s3";
-
 import { config } from '../config';
 
 // Create an S3 instance with the AWS API credentials
@@ -14,6 +13,7 @@ const s3Config: S3ClientConfig = {
 
 export const s3 = new S3(s3Config);
 
+// Delete specific file from S3 bucket
 export const deleteFileFromS3 = async (key: string): Promise<void> => {
     const params = {
         Bucket: config.bucket_name,
@@ -36,7 +36,7 @@ export const uploadFileToS3 = async (file: Express.Multer.File): Promise<string>
         ContentType: mimetype,
     };
 
-    // Sending the file to S3
+    // Sending file to S3
     await new Upload({
         client: s3,
         params
@@ -46,6 +46,7 @@ export const uploadFileToS3 = async (file: Express.Multer.File): Promise<string>
     return `https://${config.bucket_name}.s3.${config.aws_region}.amazonaws.com/${originalname}`;
 };
 
+// Upload file from S3 bucket
 export const uploadFilesToS3 = async (files: Express.Multer.File[]): Promise<string[]> => {
     const urls: string[] = [];
 
@@ -61,7 +62,7 @@ export const uploadFilesToS3 = async (files: Express.Multer.File[]): Promise<str
             ContentType: mimetype,
         };
 
-        // Sending the file to S3
+        // Sending file to S3
         await new Upload({
             client: s3,
             params,

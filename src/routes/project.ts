@@ -5,7 +5,6 @@ import { sendResponse } from "../services/SendResponse";
 
 import {
     validateProject,
-    getProjectByGender,
     getProjectById,
     getProjectByLabel,
     getAllProject,
@@ -130,23 +129,6 @@ projectRouter.get('/page', async (req: Request, res: Response): Promise<void> =>
 });
 
 /**
-* Get all project records with the specified gender.
-* @param {Object} req
-* @param {Object} res
-* @returns {Promise<void>}
-* @throws {Error}
-*/
-projectRouter.get('/gender/:gender', async (req: Request, res: Response): Promise<void> => {
-    try {
-        const gender = req.params.gender as string;
-        const project = await getProjectByGender(gender)
-        sendResponse(res, project, 'project not found');
-    } catch (err) {
-        res.status(500).json({ message: 'Error retrieving project from database', error: err })
-    }
-});
-
-/**
 * Get a project record by label.
 * @param {Object} req
 * @param {Object} res
@@ -219,22 +201,6 @@ projectRouter.delete('/delete/:id', async (req: Request, res: Response): Promise
     } catch (error) {
         console.error('An error occurred while deleting the project: ', error);
         res.status(500).json({ message: 'An error occurred while deleting the project' });
-    }
-});
-
-// Route pour téléverser des fichiers à S3
-projectRouter.post('/upload-many', upload.array('files'), async (req: Request, res: Response): Promise<void> => {
-    try {
-        if (!Array.isArray(req.files)) {
-            res.status(400).json({ success: false, error: 'Invalid files' });
-            return;
-        }
-
-        const urls = await uploadFilesToS3(req.files);
-
-        res.json({ success: true, urls });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error });
     }
 });
 

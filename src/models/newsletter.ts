@@ -71,11 +71,9 @@ export const getNewsletterByMail = async (mail: string): Promise<Newsletter | un
 * @throws {Error}
 */
 export const createNewsletter = async ({ mail, consent }: Newsletter): Promise<Newsletter> => {
-    const sql = 'INSERT INTO newsletter (mail, consent) VALUES (?, ?)';
-  
     try {
       const connection = await getDBConnection();
-      const [result]: any = await connection.query(sql, [mail, consent]);
+      const [result]: any = await connection.query('INSERT INTO newsletter (mail, consent) VALUES (?, ?)', [mail, consent]);
       connection.release();
       const id_newsletter = result.insertId;
       return { id_newsletter, mail, consent };
