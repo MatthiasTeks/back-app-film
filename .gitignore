@@ -21,6 +21,7 @@
 .idea
 .firebase
 .firebaserc
+.vscode
 
 
 npm-debug.log*

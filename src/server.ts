@@ -3,8 +3,7 @@ import dotenv, { DotenvConfigOptions } from 'dotenv';
 import morgan from 'morgan';
 
 import { setupRoutes } from './routes';
-import { corsMiddleware } from './middlewares/cors';
-import { signUrl } from "./services/SignUrl";
+import { corsMiddleware } from './middleware/cors';
 import { createDBConnection } from "./config/database";
 
 dotenv.config(<DotenvConfigOptions>{ silent: true });
@@ -13,7 +12,7 @@ dotenv.config(<DotenvConfigOptions>{ silent: true });
 const app: Application = express();
 const port: number | string = process.env.PORT || 4242;
 
-// MIDDLEWARES
+// MIDDLEWARE
 app.use(corsMiddleware);
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'common' : 'dev'));
 app.use(express.json());
@@ -31,7 +30,7 @@ app.get('/', (req: Request, res: Response) => {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Bienvenue</title>
+            <title>Welcome</title>
         </head>
         <body>
             <h1>${message}</h1>
@@ -53,3 +52,5 @@ app.get('/', (req: Request, res: Response) => {
         process.exit(1);
     }
 })();
+
+export default app;

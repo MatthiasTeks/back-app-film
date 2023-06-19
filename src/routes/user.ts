@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import argon2 from "argon2";
 
 import {getUserByMail, hashingOptions, verifyUserPassword} from "../models/user";
-import argon2 from "argon2";
 import { getDBConnection } from "../config/database";
 
 const userRouter = express.Router();
@@ -24,33 +24,27 @@ const getToken = (req: Request): string | null => {
     return null
 };
 
-/**
- * Handles the login process for an admin user.
- * Verifies the user's email, password and if it has admin rules, then generates and sends a JWT token.
- * @param {Request} req
- * @param {Response} res
- */
 userRouter.post("/login", async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
-        const admin = await getUserByMail(email);
+        const { mail, password } = req.body;
+        const admin = await getUserByMail(mail);
 
         if (!admin) {
             return res.status(401).send("Invalid credentials");
         }
 
-        const passwordIsCorrect = await verifyUserPassword(password, admin.password);
-        if (!passwordIsCorrect) {
+        const isPasswordCorrect = await verifyUserPassword(password, admin.password);
+        if (!isPasswordCorrect) {
             return res.status(401).send("Invalid credentials");
         }
 
         if(admin.is_admin !== 1){
-            return res.status(401).send("User dont have admin permission")
+            return res.status(401).send("User don't have admin permission")
         }
 
         const tokenUserInfo = {
-            email: email,
-            status: 'PouletMaster'
+            mail: mail,
+            is_admin: true,
         };
 
         const token = jwt.sign(tokenUserInfo, process.env.JWT_SECRET as string);
