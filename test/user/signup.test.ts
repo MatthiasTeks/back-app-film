@@ -1,9 +1,9 @@
 import request from 'supertest';
 import { Server } from "http";
 import { Application } from 'express';
-import { createApp } from '../src/server';
-import { createDBConnection, closeDBConnection } from '../src/config/database';
-import * as user from '../src/models/user';
+import { createApp } from '../../src/server';
+import { createDBConnection, closeDBConnection } from '../../src/config/database';
+import * as user from '../../src/models/user';
 
 let server: Server;
 let app: Application;
