@@ -4,17 +4,13 @@ export interface Project {
     label: string;
     type: string;
     journey: string;
-    s3_minia_key: string;
+    s3_image_key: string;
     s3_video_key: string;
     date: string;
-    place: string;
-    credit: string;
+    place?: string;
+    credit?: string;
     is_highlight: number
 }
-
-export type PartialProject = {
-    [P in keyof Project]?: Project[P];
-};
 
 export interface Newsletter {
     id_newsletter?: number;
