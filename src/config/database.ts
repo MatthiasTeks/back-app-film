@@ -11,7 +11,12 @@ async function getDBConnection() {
     return pool.getConnection();
 }
 
+async function closeDBConnection() {
+    return pool.end();
+}
+
 export {
     createDBConnection,
-    getDBConnection
+    getDBConnection, 
+    closeDBConnection
 };

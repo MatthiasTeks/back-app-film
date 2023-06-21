@@ -1,17 +1,11 @@
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import argon2 from "argon2";
-
-import {getUserByMail, hashingOptions, verifyUserPassword} from "../models/user";
-import { getDBConnection } from "../config/database";
+import { getUserByMail } from "../models/user";
+import { postUser } from '../models/user';
+import { hashPassword, verifyUserPassword } from '../middleware/password';
 
 const userRouter = express.Router();
 
-/**
- * Retrieves the token from the request's authorization header or query parameter.
- * @param {Request} req
- * @returns {string | null}
- */
 const getToken = (req: Request): string | null => {
     if (
         req.headers.authorization &&
@@ -58,23 +52,18 @@ userRouter.post("/login", async (req: Request, res: Response) => {
     }
 });
 
-userRouter.post("/sign-up", async (req: Request, res: Response) => {
+userRouter.post("/sign-up", hashPassword, async (req: Request, res: Response) => {
     try {
-        const { email, password} = req.body;
+        const { mail, password, is_admin = 0 } = req.body;
 
-        // modify this line if you want to create new admin
-        const isAdmin = 0;
+        const response = await postUser({mail, password, is_admin})
 
-        const hashedPassword = await argon2.hash(password, hashingOptions);
+        if (response) {
+            res.status(200).send({ message: "User created successfully" });
+        } else {
+            res.status(500).send({ message: "Failed to create user" });
+        }
 
-        const sql = 'INSERT INTO user (mail, password, is_admin) VALUES (?, ?, ?)'
-
-        // Insert the new admin into the database
-        const connection = await getDBConnection();
-        await connection.query(sql, [email, hashedPassword, isAdmin]);
-        connection.release();
-
-        res.status(200).send({ message: "User created successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).send("Error creating user");
