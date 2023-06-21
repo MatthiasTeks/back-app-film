@@ -25,7 +25,6 @@ describe('Sign Up User', () => {
     const newUser = {
       mail: 'test@example.com',
       password: 'password123',
-      is_admin: 0,
     };
 
     const response = await request(app)
@@ -40,7 +39,6 @@ describe('Sign Up User', () => {
     const newUser = {
       mail: 'test@example.com',
       password: 'password123',
-      is_admin: 0,
     };
 
     const postUserSpy = jest.spyOn(user, 'postUser');

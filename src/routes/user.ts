@@ -1,8 +1,19 @@
 import express, { Request, Response } from 'express';
+import Joi, { Schema } from 'joi';
 import jwt from 'jsonwebtoken';
 import { getUserByMail } from "../models/user";
 import { postUser } from '../models/user';
 import { hashPassword, verifyUserPassword } from '../middleware/password';
+import { User } from "../interface/Interface";
+
+const validateUser = (data: any) => {
+    const schema: Schema<User> = Joi.object({
+        mail: Joi.string().email().required(),
+        password: Joi.string().required(),
+    });
+
+    return schema.validate(data);
+};
 
 const userRouter = express.Router();
 
@@ -20,6 +31,12 @@ const getToken = (req: Request): string | null => {
 
 userRouter.post("/login", async (req: Request, res: Response) => {
     try {
+        const { error } = validateUser(req.body);
+
+        if (error) {
+            return res.status(400).json('{ error: error.details }');
+        }
+
         const { mail, password } = req.body;
         const admin = await getUserByMail(mail);
 
@@ -28,6 +45,7 @@ userRouter.post("/login", async (req: Request, res: Response) => {
         }
 
         const isPasswordCorrect = await verifyUserPassword(password, admin.password);
+        
         if (!isPasswordCorrect) {
             return res.status(401).send("Invalid credentials");
         }
@@ -54,6 +72,12 @@ userRouter.post("/login", async (req: Request, res: Response) => {
 
 userRouter.post("/sign-up", hashPassword, async (req: Request, res: Response) => {
     try {
+        const { error } = validateUser(req.body);
+
+        if (error) {
+            return res.status(400).json({ error: error.details });
+        }
+
         const { mail, password, is_admin = 0 } = req.body;
 
         const response = await postUser({mail, password, is_admin})
@@ -70,11 +94,6 @@ userRouter.post("/sign-up", hashPassword, async (req: Request, res: Response) =>
     }
 });
 
-/**
- * Verifies if the token provided in the request is valid, granting or denying access to a protected resource.
- * @param {Request} req
- * @param {Response} res
- */
 userRouter.post('/protected', (req: Request, res: Response) => {
     const token = getToken(req)
     jwt.verify(token as string, process.env.JWT_SECRET as string, (err) => {

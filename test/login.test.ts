@@ -35,16 +35,16 @@ describe('Login User', () => {
       expect(response.header).toHaveProperty('x-access-token');
     });
 
-    test('should return 401 when no credentials are provided', async () => {
+    test('should return 400 when no credentials are provided', async () => {
         const response = await request(app)
             .post('/user/login')
 
-        expect(response.status).toBe(401);
+        expect(response.status).toBe(400);
     })
 
     test('should return 401 if credentials are invalid', async () => {
         const invalidCredentials = {
-            mail: 'invalid',
+            mail: 'invalid@hotmail.com',
             password: 'invalid',
         };
 
