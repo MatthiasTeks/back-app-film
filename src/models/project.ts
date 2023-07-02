@@ -2,55 +2,35 @@ import { OkPacket, RowDataPacket } from "mysql2";
 import { getDBConnection } from "../config/database";
 import { Project } from '../interface/Interface';
 
+const rowToProject = (row: RowDataPacket): Project => {
+  return {
+      id_project: row.id_project,
+      name: row.name,
+      label: row.label,
+      type: row.type,
+      journey: row.journey,
+      s3_image_key: row.s3_image_key,
+      s3_video_key: row.s3_video_key,
+      date: row.s3_date_key,
+      place: row.s3_place_key,
+      credit: row.s3_credit_key,
+      is_highlight: row.s3_is_highlight_key,
+  };
+};
+
 export const getAllProject = async (): Promise<Project[]> => {
     const connection = await getDBConnection();
     const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project');
     connection.release();
   
-    if (result) {
-      return result.map((row: RowDataPacket) => {
-        return {
-            id_project: row.id_project,
-            name: row.name,
-            label: row.label,
-            type: row.type,
-            journey: row.journey,
-            s3_image_key: row.s3_image_key,
-            s3_video_key: row.s3_video_key,
-            date: row.s3_date_key,
-            place: row.s3_place_key,
-            credit: row.s3_credit_key,
-            is_highlight: row.s3_is_highlight_key,
-        } as Project;
-      });
-    } else {
-      return [];
-    }
+    return result ? result.map(rowToProject) : [];
 };
 
 export const getProjectHighlighted = async (): Promise<Project[]> => {
     const connection = await getDBConnection();
     const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project WHERE is_highlight = 1');
     connection.release();
-    if (result) {
-        return result.map((row: RowDataPacket) => {
-          return {
-              id_project: row.id_project,
-              name: row.name,
-              label: row.label,
-              type: row.type,
-              journey: row.journey,
-              s3_image_key: row.s3_image_key,
-              s3_video_key: row.s3_video_key,
-              date: row.s3_date_key,
-              place: row.s3_place_key,
-              credit: row.s3_credit_key,
-              is_highlight: row.s3_is_highlight_key,
-          } as Project;
-        });
-      } else {
-        return [];
-    }
+    return result ? result.map(rowToProject) : [];
 };
 
 export const getProjectByLabel = async (label: string): Promise<Project[]> => {
@@ -59,25 +39,7 @@ export const getProjectByLabel = async (label: string): Promise<Project[]> => {
     const [result] = await connection.query<RowDataPacket[]>(sql, [label]);
     connection.release();
 
-    if (result) {
-        return result.map((row: RowDataPacket) => {
-          return {
-              id_project: row.id_project,
-              name: row.name,
-              label: row.label,
-              type: row.type,
-              journey: row.journey,
-              s3_image_key: row.s3_image_key,
-              s3_video_key: row.s3_video_key,
-              date: row.s3_date_key,
-              place: row.s3_place_key,
-              credit: row.s3_credit_key,
-              is_highlight: row.s3_is_highlight_key,
-          } as Project;
-        });
-      } else {
-        return [];
-    }
+    return result ? result.map(rowToProject) : [];
 };
 
 export const createProject = async (project: Project): Promise<Project | undefined> => {
@@ -117,25 +79,7 @@ export const getProjectPageByType = async (page: number, type: string): Promise<
     const [result] = await connection.query<RowDataPacket[]>(sql, values);
     connection.release();
 
-    if (result) {
-        return result.map((row: RowDataPacket) => {
-          return {
-              id_project: row.id_project,
-              name: row.name,
-              label: row.label,
-              type: row.type,
-              journey: row.journey,
-              s3_image_key: row.s3_image_key,
-              s3_video_key: row.s3_video_key,
-              date: row.s3_date_key,
-              place: row.s3_place_key,
-              credit: row.s3_credit_key,
-              is_highlight: row.s3_is_highlight_key,
-          } as Project;
-        });
-      } else {
-        return [];
-    }
+    return result ? result.map(rowToProject) : [];
 };
 
 export const updateProjectById = async (id: number, newAttributes: Project) => {
@@ -162,13 +106,8 @@ export const getProjectById = async (id: number): Promise<Project[]> => {
 };
 
 export const deleteProjectById = async (id: number): Promise<boolean> => {
-    try {
-      const connection = await getDBConnection();
-      const [result] = await connection.query<OkPacket>('DELETE FROM project WHERE id_project = ?', [id]);
-      connection.release();
-      return result.affectedRows !== 0;
-    } catch (error) {
-      console.error('Erreur lors de la requête: ', error);
-      throw error;
-    }
+  const connection = await getDBConnection();
+  const [result] = await connection.query<OkPacket>('DELETE FROM project WHERE id_project = ?', [id]);
+  connection.release();
+  return result.affectedRows !== 0;
 };

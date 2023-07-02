@@ -3,7 +3,6 @@ import Joi, { Schema } from 'joi';
 import { sendResponse } from "../services/SendResponse";
 import { SignProject } from "../helpers/SignProject";
 import { Project } from '../interface/Interface';
-
 import {
     getProjectById,
     getProjectByLabel,

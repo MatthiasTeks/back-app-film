@@ -12,16 +12,13 @@ const port: number | string = process.env.PORT || 4242;
 const createApp = async (): Promise<Application> => {
     const app: Application = express();
 
-    // MIDDLEWARE
     app.use(corsMiddleware);
     app.use(morgan(process.env.NODE_ENV === 'production' ? 'common' : 'dev'));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
-    // ROUTING
     setupRoutes(app);
 
-    // TEST CONNECTION
     app.get('/', (req: Request, res: Response) => {
         const message = 'API Films de la Bande';
         res.send(`
