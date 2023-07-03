@@ -107,11 +107,11 @@ projectRouter.get('/page', async (req: Request, res: Response) => {
     }
 });
 
-projectRouter.get('/label/:label', async (req: Request, res: Response): Promise<void> => {
+projectRouter.get('/label/:label', async (req: Request, res: Response) => {
     try {
         const name = req.params.label as string;
         const project: Project[] = await getProjectByLabel(name)
-        if(project.length){
+        if(project){
             const signedProject = await SignProject(project[0]);
             sendResponse(res, signedProject, `${name} project can't be signed`);
         } else {

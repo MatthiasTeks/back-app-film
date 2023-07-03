@@ -11,75 +11,76 @@ const rowToProject = (row: RowDataPacket): Project => {
       journey: row.journey,
       s3_image_key: row.s3_image_key,
       s3_video_key: row.s3_video_key,
-      date: row.s3_date_key,
-      place: row.s3_place_key,
-      credit: row.s3_credit_key,
-      is_highlight: row.s3_is_highlight_key,
+      date: row.date,
+      place: row.place,
+      credit: row.redit,
+      is_highlight: row.is_highlight,
   };
 };
 
 export const getAllProject = async (): Promise<Project[]> => {
-    const connection = await getDBConnection();
-    const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project');
-    connection.release();
-  
-    return result ? result.map(rowToProject) : [];
+  console.log('hello');
+  const connection = await getDBConnection();
+  const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project');
+  connection.release();
+
+  return result ? result.map(rowToProject) : [];
 };
 
 export const getProjectHighlighted = async (): Promise<Project[]> => {
-    const connection = await getDBConnection();
-    const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project WHERE is_highlight = 1');
-    connection.release();
-    return result ? result.map(rowToProject) : [];
+  const connection = await getDBConnection();
+  const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project WHERE is_highlight = 1');
+  connection.release();
+  return result ? result.map(rowToProject) : [];
 };
 
 export const getProjectByLabel = async (label: string): Promise<Project[]> => {
-    const connection = await getDBConnection();
-    const sql = 'SELECT * FROM project WHERE label = ?';
-    const [result] = await connection.query<RowDataPacket[]>(sql, [label]);
-    connection.release();
+  const connection = await getDBConnection();
+  const sql = 'SELECT * FROM project WHERE label = ?';
+  const [result] = await connection.query<RowDataPacket[]>(sql, [label]);
+  connection.release();
 
-    return result ? result.map(rowToProject) : [];
+  return result ? result.map(rowToProject) : [];
 };
 
 export const createProject = async (project: Project): Promise<Project | undefined> => {
-    const {name, label, type, journey, s3_image_key, s3_video_key, date, place, credit, is_highlight} = project;
-    const sql = 'INSERT INTO project (name, label, type, journey, s3_image_key, s3_video_key, date, place, credit, is_highlight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+  const {name, label, type, journey, s3_image_key, s3_video_key, date, place, credit, is_highlight} = project;
+  const sql = 'INSERT INTO project (name, label, type, journey, s3_image_key, s3_video_key, date, place, credit, is_highlight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
-    const connection = await getDBConnection();
-    const [result] = await connection.query<OkPacket>(sql, [name, label, type, journey, s3_image_key, s3_video_key, date, place, credit, is_highlight]);
-    connection.release();
+  const connection = await getDBConnection();
+  const [result] = await connection.query<OkPacket>(sql, [name, label, type, journey, s3_image_key, s3_video_key, date, place, credit, is_highlight]);
+  connection.release();
 
-    if(result.affectedRows === 1) {
-        return {
-            id_project: result.insertId,
-            name: name,
-            label: label,
-            type: type,
-            journey: journey,
-            s3_image_key: s3_image_key,
-            s3_video_key: s3_video_key,
-            date: date,
-            place: place,
-            credit: credit,
-            is_highlight: is_highlight,
-        } as Project;
-    } else {
-        return undefined
-    }
+  if(result.affectedRows === 1) {
+      return {
+          id_project: result.insertId,
+          name: name,
+          label: label,
+          type: type,
+          journey: journey,
+          s3_image_key: s3_image_key,
+          s3_video_key: s3_video_key,
+          date: date,
+          place: place,
+          credit: credit,
+          is_highlight: is_highlight,
+      } as Project;
+  } else {
+      return undefined
+  }
 };
 
 export const getProjectPageByType = async (page: number, type: string): Promise<Project[]> => {
-    const limit = 6;
-    const offset = (page - 1) * limit;
-    const sql = `SELECT * FROM project WHERE type_projet = ? LIMIT ?, ?`;
-    const values = [type, offset, limit];
-  
-    const connection = await getDBConnection();
-    const [result] = await connection.query<RowDataPacket[]>(sql, values);
-    connection.release();
+  const limit = 6;
+  const offset = (page - 1) * limit;
+  const sql = `SELECT * FROM project WHERE type_projet = ? LIMIT ?, ?`;
+  const values = [type, offset, limit];
 
-    return result ? result.map(rowToProject) : [];
+  const connection = await getDBConnection();
+  const [result] = await connection.query<RowDataPacket[]>(sql, values);
+  connection.release();
+
+  return result ? result.map(rowToProject) : [];
 };
 
 export const updateProjectById = async (id: number, newAttributes: Project) => {
@@ -93,16 +94,16 @@ export const updateProjectById = async (id: number, newAttributes: Project) => {
 };
 
 export const getProjectById = async (id: number): Promise<Project[]> => {
-    const sql = 'SELECT * FROM project WHERE id_project = ?';
-    const connection = await getDBConnection();
-    const [result] = await connection.query<RowDataPacket[]>(sql, [id]);
-    connection.release();
+  const sql = 'SELECT * FROM project WHERE id_project = ?';
+  const connection = await getDBConnection();
+  const [result] = await connection.query<RowDataPacket[]>(sql, [id]);
+  connection.release();
 
-    if (result) {
-        return result[0] as Project[];
-    } else {
-        return [];
-    }
+  if (result) {
+      return result[0] as Project[];
+  } else {
+      return [];
+  }
 };
 
 export const deleteProjectById = async (id: number): Promise<boolean> => {
