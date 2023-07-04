@@ -19,7 +19,6 @@ const rowToProject = (row: RowDataPacket): Project => {
 };
 
 export const getAllProject = async (): Promise<Project[]> => {
-  console.log('hello');
   const connection = await getDBConnection();
   const [result] = await connection.query<RowDataPacket[]>('SELECT * FROM project');
   connection.release();
@@ -84,7 +83,7 @@ export const getProjectPageByType = async (page: number, type: string): Promise<
 };
 
 export const updateProjectById = async (id: number, newAttributes: Project) => {
-    const { name, label, type, journey, s3_image_key, s3_video_key, date, place, credit, is_highlight } = newAttributes;
+    const { name, label, type, journey, s3_image_key, s3_video_key, date, place=undefined, credit=undefined, is_highlight=0 } = newAttributes;
     
     const connection = await getDBConnection();
     const sql = `UPDATE project SET name=?, label=?, type=?, journey=?, s3_image_key=?, s3_video_key=?, date=?, place=?, credit=?, is_highlight=? WHERE id_project = ?`;

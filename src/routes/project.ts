@@ -16,6 +16,7 @@ import {
 
 const validateProject = (data: any) => {
     const schema: Schema<Project> = Joi.object({
+        id_project: Joi.number().optional(),
         name: Joi.string().required(),
         label: Joi.string().required(),
         type: Joi.string().required(),
@@ -124,6 +125,7 @@ projectRouter.get('/label/:label', async (req: Request, res: Response) => {
 
 projectRouter.put('/update/:id', async (req: Request, res: Response) => {
     try {
+        console.log('start:', req.body)
         const { error } = validateProject(req.body);
         if (error) {
             return res.status(400).json('{ error: error.details }');
@@ -131,7 +133,9 @@ projectRouter.put('/update/:id', async (req: Request, res: Response) => {
 
         const id = parseInt(req.params.id as string, 10);
 
+        console.log('id:', id);
         const project: Project[]  = await getProjectById(id);
+        console.log(project);
         if (project.length) {
             await updateProjectById(id, req.body);
             const updatedProject = await getProjectById(id);
