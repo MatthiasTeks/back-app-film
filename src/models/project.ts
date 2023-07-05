@@ -72,7 +72,7 @@ export const createProject = async (project: Project): Promise<Project | undefin
 export const getProjectPageByType = async (page: number, type: string): Promise<Project[]> => {
   const limit = 6;
   const offset = (page - 1) * limit;
-  const sql = `SELECT * FROM project WHERE type_projet = ? LIMIT ?, ?`;
+  const sql = `SELECT * FROM project WHERE type = ? LIMIT ?, ?`;
   const values = [type, offset, limit];
 
   const connection = await getDBConnection();

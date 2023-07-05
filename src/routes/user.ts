@@ -8,7 +8,7 @@ import { User } from "../interface/Interface";
 
 const validateUser = (data: any) => {
     const schema: Schema<User> = Joi.object({
-        mail: Joi.string().email().required(),
+        mail: Joi.string().required(),
         password: Joi.string().required(),
     });
 
@@ -33,9 +33,12 @@ userRouter.post("/login", async (req: Request, res: Response) => {
     try {
         const { error } = validateUser(req.body);
 
+        console.log(req.body);
+
         if (error) {
             return res.status(400).json('{ error: error.details }');
         }
+
 
         const { mail, password } = req.body;
         const admin = await getUserByMail(mail);
@@ -44,9 +47,12 @@ userRouter.post("/login", async (req: Request, res: Response) => {
             return res.status(401).send("Invalid credentials");
         }
 
+        console.log(password, admin.password);
         const isPasswordCorrect = await verifyUserPassword(password, admin.password);
+        console.log(isPasswordCorrect);
         
         if (!isPasswordCorrect) {
+            console.log("error")
             return res.status(401).send("Invalid credentials");
         }
 
@@ -78,7 +84,7 @@ userRouter.post("/sign-up", hashPassword, async (req: Request, res: Response) =>
             return res.status(400).json({ error: error.details });
         }
 
-        const { mail, password, is_admin = 0 } = req.body;
+        const { mail, password, is_admin = 1 } = req.body;
 
         const response = await postUser({mail, password, is_admin})
 

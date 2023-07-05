@@ -20,7 +20,7 @@ feedRouter.get('/', async (req: Request, res: Response) => {
         if(feeds){
             const signedFeeds = await Promise.all(feeds.map(async (feed) => {
                 const signedUrl = await signUrl(feed.s3_image_key);
-                return { ...feed, signedUrl };
+                return { ...feed, s3_image_key: signedUrl };
             }));
             sendResponse(res, signedFeeds, 'feed not found');
         }
