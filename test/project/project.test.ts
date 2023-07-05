@@ -5,7 +5,6 @@ import { createApp } from '../../src/server';
 import { createDBConnection, closeDBConnection } from '../../src/config/database';
 import { Project } from '../../src/interface/Interface';
 import dotenv from "dotenv";
-import { object } from 'joi';
 dotenv.config();
 
 let server: Server;
@@ -69,9 +68,3 @@ describe('update project by id', () => {
         expect(typeof response.body).toBe("object");
     })
 })
-
-/* describe('get page project', () => {
-    test('should return 6 projects depend on page number', async () => {
-
-    })
-}) */
