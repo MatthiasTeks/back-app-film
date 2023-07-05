@@ -2,7 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import dotenv, { DotenvConfigOptions } from 'dotenv';
 import morgan from 'morgan';
 import { setupRoutes } from './routes';
-import { corsMiddleware } from './middleware/cors';
+import { corsMiddleware } from './middleware/corsMiddleware';
 import { createDBConnection } from "./config/database";
 
 dotenv.config(<DotenvConfigOptions>{ silent: true });

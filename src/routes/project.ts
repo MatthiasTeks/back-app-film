@@ -1,8 +1,11 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import Joi, { Schema } from 'joi';
 import { sendResponse } from "../services/SendResponse";
 import { SignProject } from "../helpers/SignProject";
 import { Project } from '../interface/Interface';
+import { fileUpload } from '../middleware/multerMiddleware';
+import { validationMiddleware } from '../middleware/validationMiddleware';
+import { checkDuplicateMiddleware } from '../middleware/checkDuplicateMiddleware';
 import {
     getProjectById,
     getProjectByLabel,
@@ -14,23 +17,19 @@ import {
     deleteProjectById
 } from "../models/project";
 
-const validateProject = (data: any) => {
-    const schema: Schema<Project> = Joi.object({
-        id_project: Joi.number().optional(),
-        name: Joi.string().required(),
-        label: Joi.string().required(),
-        type: Joi.string().required(),
-        journey: Joi.string().required(),
-        s3_image_key: Joi.string().required(),
-        s3_video_key: Joi.string().required(),
-        date: Joi.string().required(),
-        place: Joi.string().optional(),
-        credit: Joi.string().optional(),
-        is_highlight: Joi.number().valid(0, 1).required(),
-    });
-
-    return schema.validate(data);
-};
+const schema: Schema<Project> = Joi.object({
+    id_project: Joi.number().optional(),
+    name: Joi.string().required(),
+    label: Joi.string().required(),
+    type: Joi.string().required(),
+    journey: Joi.string().required(),
+    s3_image_key: Joi.string().required(),
+    s3_video_key: Joi.string().required(),
+    date: Joi.string().required(),
+    place: Joi.string().optional(),
+    credit: Joi.string().optional(),
+    is_highlight: Joi.number().valid(0, 1).required(),
+});
 
 const projectRouter = express.Router();
 
@@ -67,28 +66,23 @@ projectRouter.get('/highlight', async (req: Request, res: Response) => {
     }
 });
 
-projectRouter.post('/create', async (req: Request, res: Response) => {
-    try {
-        const { error } = validateProject(req.body);
-        if (error) {
-            return res.status(400).json('{ error: error.details }');
+projectRouter.post('/create', 
+    validationMiddleware(schema),
+    checkDuplicateMiddleware(getProjectByLabel),
+    fileUpload.fields([{name: "image", maxCount: 1}, {name: "video", maxCount: 1}]), 
+    async (req: Request, res: Response) => {
+        try {
+            const createdProject: Project | undefined = await createProject(req.body);
+            if(createdProject){
+                sendResponse(res, createProject, 'projects created successfully');
+            } else {
+                sendResponse(res, createProject, 'projects signed unsuccessful');
+            }
+        } catch (err) {
+            res.status(500).json({ message: 'Error saving the project', error: err });
         }
-
-        const projectAlreadyExist: Project[] = await getProjectByLabel(req.body.label);
-        if (projectAlreadyExist) {
-            return res.status(409).json({ message: "Project with the same name already exists" });
-        }
-
-        const createdProject: Project | undefined = await createProject(req.body);
-        if(createdProject){
-            sendResponse(res, createProject, 'projects created successfully');
-        } else {
-            sendResponse(res, createProject, 'projects signed unsuccessful');
-        }
-    } catch (err) {
-        res.status(500).json({ message: 'Error saving the project', error: err });
     }
-});
+);
 
 projectRouter.get('/page', async (req: Request, res: Response) => {
     try {
@@ -108,7 +102,7 @@ projectRouter.get('/page', async (req: Request, res: Response) => {
     }
 });
 
-projectRouter.get('/label/:label', async (req: Request, res: Response) => {
+projectRouter.get('/label/:label',  async (req: Request, res: Response) => {
     try {
         const name = req.params.label as string;
         const project: Project[] = await getProjectByLabel(name)
@@ -123,30 +117,25 @@ projectRouter.get('/label/:label', async (req: Request, res: Response) => {
     }
 });
 
-projectRouter.put('/update/:id', async (req: Request, res: Response) => {
-    try {
-        console.log('start:', req.body)
-        const { error } = validateProject(req.body);
-        if (error) {
-            return res.status(400).json('{ error: error.details }');
+projectRouter.put('/update/:id', 
+    validationMiddleware(schema),
+    fileUpload.fields([{name: "image", maxCount: 1}, {name: "video", maxCount: 1}]), 
+    async (req: Request, res: Response) => {
+        try {
+            const id = parseInt(req.params.id as string, 10);
+            const project: Project[]  = await getProjectById(id);
+            
+            if (project.length) {
+                await updateProjectById(id, req.body);
+                const updatedProject = await getProjectById(id);
+                res.status(200).json(updatedProject);
+            } else {
+                sendResponse(res, project, `project ${id} not found`);
+            }
+            
+        } catch (err) {
+            res.status(500).json({ message: 'Error updating project', error: err });
         }
-
-        const id = parseInt(req.params.id as string, 10);
-
-        console.log('id:', id);
-        const project: Project[]  = await getProjectById(id);
-        console.log(project);
-        if (project.length) {
-            await updateProjectById(id, req.body);
-            const updatedProject = await getProjectById(id);
-            res.status(200).json(updatedProject);
-        } else {
-            sendResponse(res, project, `project ${id} not found`);
-        }
-        
-    } catch (err) {
-        res.status(500).json({ message: 'Error updating project', error: err });
-    }
 });
 
 projectRouter.delete('/delete/:id', async (req: Request, res: Response): Promise<void> => {

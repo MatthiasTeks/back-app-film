@@ -1,15 +1,10 @@
 import express, { Request, Response } from 'express';
-import multer from "multer";
-
 import { sendResponse } from "../services/SendResponse";
 import { getBackground, updateBackground } from "../models/background";
 import { signUrl } from "../services/SignUrl";
+import { fileUpload } from '../middleware/multerMiddleware';
 
 const backgroundRouter = express.Router();
-
-// Multer storage configuration for handling file uploads
-const storage = multer.memoryStorage();
-const upload = multer({ storage })
 
 /**
 * Retrieve background video from home page.
@@ -29,7 +24,7 @@ backgroundRouter.get('/', async (req: Request, res: Response) => {
 /**
  * Update background video from home page
  */
-backgroundRouter.post('/update', upload.single('file'), async (req: Request, res: Response) => {
+backgroundRouter.post('/update', fileUpload.single('file'), async (req: Request, res: Response) => {
     try {
         const file = req.file;
         if(file){

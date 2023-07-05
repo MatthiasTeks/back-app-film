@@ -3,7 +3,7 @@ import Joi, { Schema } from 'joi';
 import jwt from 'jsonwebtoken';
 import { getUserByMail } from "../models/user";
 import { postUser } from '../models/user';
-import { hashPassword, verifyUserPassword } from '../middleware/password';
+import { hashPassword, verifyUserPassword } from '../middleware/passwordMiddlewares';
 import { User } from "../interface/Interface";
 
 const validateUser = (data: any) => {
