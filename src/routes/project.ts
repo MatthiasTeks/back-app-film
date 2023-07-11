@@ -95,7 +95,7 @@ projectRouter.get('/page', async (req: Request, res: Response) => {
             }));
             sendResponse(res, signedProjects, 'project not found');
         } else {
-            sendResponse(res, null, 'no projects page found');
+            sendResponse(res, [], 'no projects page found');
         }
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project page from database', error: err })
@@ -113,7 +113,7 @@ projectRouter.get('/type-page', async (req: Request, res: Response) => {
             }));
             sendResponse(res, signedProjects, 'project not found');
         } else {
-            sendResponse(res, null, 'no projects page found');
+            sendResponse(res, [], 'no projects page found');
         }
     } catch (err) {
         res.status(500).json({ message: 'Error retrieving project page from database', error: err })
