@@ -47,9 +47,7 @@ userRouter.post("/login", async (req: Request, res: Response) => {
             return res.status(401).send("Invalid credentials");
         }
 
-        console.log(password, admin.password);
         const isPasswordCorrect = await verifyUserPassword(password, admin.password);
-        console.log(isPasswordCorrect);
         
         if (!isPasswordCorrect) {
             console.log("error")

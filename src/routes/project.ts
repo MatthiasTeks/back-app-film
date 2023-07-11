@@ -11,6 +11,7 @@ import {
     getProjectByLabel,
     getAllProject,
     getProjectHighlighted,
+    getProjectPage,
     getProjectPageByType,
     createProject,
     updateProjectById,
@@ -87,14 +88,29 @@ projectRouter.post('/create',
 projectRouter.get('/page', async (req: Request, res: Response) => {
     try {
         const page = parseInt(req.query.page as string, 10);
-        const type = req.query.type as string;
-        const projects: Project[] = await getProjectPageByType(page, type)
-        console.log(projects)
+        const projects: Project[] = await getProjectPage(page)
         if(projects.length){
             const signedProjects = await Promise.all(projects.map(async (project) => {
                 return SignProject(project);
             }));
-            console.log(signedProjects)
+            sendResponse(res, signedProjects, 'project not found');
+        } else {
+            sendResponse(res, null, 'no projects page found');
+        }
+    } catch (err) {
+        res.status(500).json({ message: 'Error retrieving project page from database', error: err })
+    }
+});
+
+projectRouter.get('/type-page', async (req: Request, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string, 10);
+        const type = req.query.type as string;
+        const projects: Project[] = await getProjectPageByType(page, type)
+        if(projects.length){
+            const signedProjects = await Promise.all(projects.map(async (project) => {
+                return SignProject(project);
+            }));
             sendResponse(res, signedProjects, 'project not found');
         } else {
             sendResponse(res, null, 'no projects page found');
